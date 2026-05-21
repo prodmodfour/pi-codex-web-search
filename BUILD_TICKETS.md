@@ -422,7 +422,7 @@ Commit when complete.
 
 ## 018 — Add example local Pi project fixture
 
-Status: TODO
+Status: DONE
 
 Create a tiny fixture showing how a user would install/load the package in a local Pi project.
 

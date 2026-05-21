@@ -23,7 +23,7 @@ src/pi/registerCodexWebSearchTool.ts      # Pi tool registration and execution w
 test/package-shape.test.mjs               # smoke tests for the package skeleton
 test/fake-codex-integration.test.mjs      # fake Codex executable integration coverage
 test/fixtures/fake-codex.mjs              # deterministic fake codex exec fixture
-docs/                                # install, design, security, usage, validation, and quality-gate notes
+docs/                                # install, example fixture, design, security, usage, validation, and quality-gate notes
 scripts/quality-gate.sh              # local validation gate used by the build loop
 scripts/check-package-contents.mjs   # npm dry-run package contents validator
 ```
@@ -80,7 +80,7 @@ pi install -l npm:pi-codex-web-search@0.0.0
 pi
 ```
 
-Use `pi install ...` without `-l` for a global user install, or `pi -e ...` for a temporary one-session load. The repository package version is currently `0.0.0`; replace it with the published version you intend to run. Detailed local, git, npm, manifest, and auto-discovery notes are in [`docs/INSTALLATION.md`](docs/INSTALLATION.md).
+Use `pi install ...` without `-l` for a global user install, or `pi -e ...` for a temporary one-session load. The repository package version is currently `0.0.0`; replace it with the published version you intend to run. Detailed local, git, npm, manifest, and auto-discovery notes are in [`docs/INSTALLATION.md`](docs/INSTALLATION.md). A docs-only throwaway project fixture is in [`docs/EXAMPLE_LOCAL_PI_PROJECT.md`](docs/EXAMPLE_LOCAL_PI_PROJECT.md).
 
 After loading, run `/codex-web-search` in Pi to confirm the help command is registered.
 

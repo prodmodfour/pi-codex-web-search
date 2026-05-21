@@ -19,6 +19,8 @@ pi install -l /absolute/path/to/pi-codex-web-search
 pi
 ```
 
+A minimal docs-only local project fixture, including the expected `.pi/settings.json` package entry and a sample prompt, is in [`EXAMPLE_LOCAL_PI_PROJECT.md`](EXAMPLE_LOCAL_PI_PROJECT.md).
+
 When Codex is authenticated with a ChatGPT/Codex account, calls made by `codex_web_search` use the local Codex CLI and may consume that account's Codex/ChatGPT plan limits. They do not use OpenAI API web-search billing by default. The extension cannot bypass Codex, ChatGPT, account, network, or web-search availability limits.
 
 ## Extension help command

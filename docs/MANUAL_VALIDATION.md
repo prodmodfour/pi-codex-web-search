@@ -114,7 +114,7 @@ pi install -l /path/to/pi-codex-web-search
 pi
 ```
 
-This writes a project-local `.pi/settings.json` entry that points at the local checkout. The package is loaded from the original path rather than copied.
+This writes a project-local `.pi/settings.json` entry that points at the local checkout. The package is loaded from the original path rather than copied. A docs-only example of the throwaway project shape and expected package entry is available in [`EXAMPLE_LOCAL_PI_PROJECT.md`](EXAMPLE_LOCAL_PI_PROJECT.md).
 
 ## 5. Confirm the help surface loads
 

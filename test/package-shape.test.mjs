@@ -5,6 +5,7 @@ import test from "node:test";
 
 const packageJsonUrl = new URL("../package.json", import.meta.url);
 const qualityGateDocsUrl = new URL("../docs/QUALITY_GATE.md", import.meta.url);
+const localPiProjectExampleDocsUrl = new URL("../docs/EXAMPLE_LOCAL_PI_PROJECT.md", import.meta.url);
 const qualityWorkflowUrl = new URL("../.github/workflows/quality.yml", import.meta.url);
 const packageJson = JSON.parse(await readFile(packageJsonUrl, "utf8"));
 
@@ -43,6 +44,19 @@ test("pack check uses the package contents validator", () => {
 
 test("release documentation exists", () => {
   assert.equal(existsSync(new URL("../docs/RELEASE.md", import.meta.url)), true);
+});
+
+test("local Pi project example is docs-only and describes expected loading behavior", async () => {
+  assert.equal(existsSync(localPiProjectExampleDocsUrl), true);
+
+  const docs = await readFile(localPiProjectExampleDocsUrl, "utf8");
+  assert.match(docs, /docs-only fixture/);
+  assert.match(docs, /\.pi\/settings\.json/);
+  assert.match(docs, /pi install -l \/absolute\/path\/to\/pi-codex-web-search/);
+  assert.match(docs, /Use the codex_web_search tool in live mode/);
+  assert.match(docs, /codex exec --json --search --skip-git-repo-check --sandbox read-only -- <query>/);
+  assert.match(docs, /Automated tests only read this Markdown file/);
+  assert.match(docs, /must not run `pi`, `codex`, or any command from this page/);
 });
 
 test("GitHub Actions quality workflow runs the local quality gate", async () => {

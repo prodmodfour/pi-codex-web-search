@@ -16,6 +16,7 @@ const REQUIRED_PACKED_FILES = [
   "extensions/codex-web-search.ts",
   "src/index.ts",
   "docs/ARCHITECTURE.md",
+  "docs/EXAMPLE_LOCAL_PI_PROJECT.md",
   "docs/EXTENSION_SPEC.md",
   "docs/INSTALLATION.md",
   "docs/MANUAL_VALIDATION.md",

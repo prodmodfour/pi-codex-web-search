@@ -50,6 +50,8 @@ pi
 
 Local path package entries point at the original checkout rather than copying it. If you move or delete the checkout, remove or update the Pi package entry.
 
+For a tiny docs-only project fixture with the expected `.pi/settings.json` package entry, help command check, sample prompt, and expected `codex_web_search` behavior, see [`EXAMPLE_LOCAL_PI_PROJECT.md`](EXAMPLE_LOCAL_PI_PROJECT.md).
+
 ## Git source
 
 Use a pinned tag, branch, or commit when loading from git so future updates are intentional.
