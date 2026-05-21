@@ -2,24 +2,22 @@
 
 ## Current state
 
-Tickets 000 through 013 are complete. The repository now has a TypeScript/npm Pi package skeleton, project-specific validation guardrails, a frozen Pi extension/package contract, the finalized `codex_web_search` tool API contract, a safe `codex exec` argv builder, a bounded Codex subprocess runner, a JSONL parser for `codex exec --json` stdout, a bounded formatter for Pi tool output, Pi tool registration wiring, a small optional Pi slash-command help surface, safe configuration handling, a fake-Codex integration test harness, a manual real-Codex validation guide, and user-facing installation/package documentation.
+Tickets 000 through 014 are complete. The repository now has a TypeScript/npm Pi package skeleton, project-specific validation guardrails, a frozen Pi extension/package contract, the finalized `codex_web_search` tool API contract, a safe `codex exec` argv builder, a bounded Codex subprocess runner, a JSONL parser for `codex exec --json` stdout, a bounded formatter for Pi tool output, Pi tool registration wiring, a small optional Pi slash-command help surface, safe configuration handling, a fake-Codex integration test harness, a manual real-Codex validation guide, user-facing installation/package documentation, and a security threat model.
 
-Ticket 013 added in this cycle:
+Ticket 014 added in this cycle:
 
-* added `docs/INSTALLATION.md` with local path, git source, and npm-style Pi package loading commands
-* documented one-session (`pi -e`), project-local (`pi install -l`), and global (`pi install`) loading patterns
-* documented the package `pi.extensions` manifest, TypeScript extension loading, conventional extension auto-discovery, package `files` allowlist, and package-loading caveats
-* updated README with install commands for local checkout, git source, and npm-style source usage once published
-* added prompt examples that should trigger `codex_web_search`, including live and cached mode examples
-* added a clear statement that authenticated Codex/ChatGPT usage may consume Codex/ChatGPT plan limits and does not use OpenAI API web-search billing by default
-* documented unsupported or brittle areas, including Codex CLI/schema drift, real-search dependency on local auth/network/account capability, local single-user scope, read-only sandbox support, and the absence of ChatGPT Web scraping/browser automation/usage-limit bypasses
-* updated `docs/USAGE.md` and `docs/EXTENSION_SPEC.md` to point at the installation docs and freeze the exact documented load paths
+* rewrote `docs/SECURITY.md` as a threat model with scope, assets, trust boundaries, data flow, threats, implemented controls, residual risks, recommended safe defaults, validation posture, and a maintainer checklist
+* documented subprocess safety, Codex sandbox/read-only limits, prompt-injection treatment for web results, credential handling, logs/artifacts, package-install/supply-chain risks, and safe operating defaults
+* documented honest residual risks, including that Codex is an external executable, `read-only` is not the same as no-read, web results remain untrusted, configured binary overrides must be trusted, and manual validation logs may contain private data
+* updated README to link to the full security threat model from the Safety notes section
+* strengthened `includeRawEvents` help/schema text to warn that raw Codex events may contain prompt/result data
+* added a regression assertion that the `/codex-web-search` help surface includes the raw-event data warning
 
-No Codex live search, authenticated Codex run, real Codex CLI execution, Codex credential access, browser automation, or network research was used in this cycle. The package documentation explains how a human can perform those checks manually, but automated validation remains fake-Codex/mocked by default.
+No Codex live search, authenticated Codex run, real Codex CLI execution, Codex credential access, browser automation, or network research was used in this cycle. The threat-model review did not require changing the subprocess execution shape, sandbox allowlist, credential handling, or automated-test strategy.
 
 ## Quality gates
 
-Ran `scripts/quality-gate.sh` successfully after implementing Ticket 013.
+Ran `scripts/quality-gate.sh` successfully after implementing Ticket 014.
 
 The passing gate performed:
 
@@ -29,19 +27,27 @@ The passing gate performed:
 * `npm ci`
 * `npm run lint --if-present`
 * `npm run typecheck --if-present`
-* `npm test --if-present` with 56 passing tests, including the fake-Codex executable integration tests
+* `npm test --if-present` with 56 passing tests, including the fake-Codex executable integration tests and the updated help-text safety assertion
 * `npm run build --if-present`
 * `npm run pack:check`
 * cleanup of `node_modules/` created by the gate
 * generated/private-file guardrail after cleanup
 
-The npm package dry-run included only the intended package files from the package `files` allowlist, now including `docs/INSTALLATION.md`. Test fixtures are not shipped in the npm package. `node_modules/` was removed by the gate before exit.
+The npm package dry-run included only the intended package files from the package `files` allowlist, including the expanded `docs/SECURITY.md`. Test fixtures are not shipped in the npm package. `node_modules/` was removed by the gate before exit.
 
 ## Known blockers and limitations
 
 None for automated quality validation.
 
 Manual real-Codex validation still requires a human machine with Pi installed, Codex CLI installed, `codex login` completed, a Pi model/provider configured, and network access. This remains an external manual activity; the repository documents the procedure but does not run it during the automated gate.
+
+The security threat model is not a formal third-party audit. It documents current controls and residual risks for local single-user use.
+
+Codex is still an external executable. A malicious `codex` binary, unsafe `PATH`, or unsafe `PI_CODEX_WEB_SEARCH_CODEX_BINARY` override can execute as the local user. Users should point overrides only at trusted Codex executables.
+
+The Codex sandbox is still limited to `read-only`, but read-only is not a no-read guarantee. Codex may be able to read files permitted by its own sandbox policy and current working directory. Users should avoid launching Pi from highly sensitive directories when running live web search.
+
+Web results remain untrusted. Prompt-injection risk cannot be eliminated by this extension; users and models should verify cited sources and avoid following instructions found in web pages.
 
 The package is not documented as published to npm yet. The npm-style Pi commands are the intended source syntax once `pi-codex-web-search` is published under the expected name/version; local path and git source loading are documented for current validation.
 
@@ -59,10 +65,10 @@ The `/codex-web-search` command uses Pi's UI notification surface when available
 
 `CodexJsonlParser` supports documented and representative JSONL event aliases but cannot guarantee every future Codex event schema. Unknown events are ignored, and missing final completed agent messages are reported clearly as `codex_missing_final_message`.
 
-`formatCodexWebSearchToolResult` and `CodexWebSearchToolExecutionError` intentionally omit raw stderr, query text, argv, and local/private paths from thrown tool-error messages. Safe diagnostic metadata remains available in formatted details.
+`formatCodexWebSearchToolResult` and `CodexWebSearchToolExecutionError` intentionally omit raw stderr, query text, argv, and local/private paths from thrown tool-error messages. Safe diagnostic metadata remains available in formatted details. Raw events remain opt-in and bounded, but may still contain prompt/result data when explicitly requested.
 
 `CodexRunner` can execute a real Codex binary through the registered tool, but automated tests only use mocked executors, JSONL fixtures, fake runners, and the checked-in fake Codex executable.
 
 ## Next recommended ticket
 
-Ticket 014 — Add security threat model.
+Ticket 015 — Add troubleshooting docs.

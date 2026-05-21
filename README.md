@@ -167,6 +167,8 @@ When loaded in Pi, the extension also registers `/codex-web-search`. The command
 
 ## Safety notes
 
+See [`docs/SECURITY.md`](docs/SECURITY.md) for the full threat model, residual risks, and recommended safe defaults.
+
 This project must never read, copy, log, or commit Codex credentials such as `~/.codex/auth.json`. Authentication remains the Codex CLI's responsibility.
 
 The current argv builder returns arguments for `CodexRunner`, which calls the configured Codex executable with `execFile` and `shell: false`. Its default live-search shape is:

@@ -113,7 +113,7 @@ export function createCodexWebSearchToolParameters(
         type: "boolean",
         default: CODEX_WEB_SEARCH_DEFAULTS.includeRawEvents,
         description:
-          "Include bounded raw Codex JSONL events in structured details for debugging. Leave false for normal use.",
+          "Include bounded raw Codex JSONL events in structured details for debugging. Raw events may contain prompt/result data; leave false for normal use.",
       },
     },
   } as const);

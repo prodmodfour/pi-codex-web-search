@@ -1,133 +1,243 @@
-# Security
+# Security Threat Model
 
-## Core security posture
+This package is a local Pi extension that registers one tool, `codex_web_search`, and delegates web research to the local Codex CLI. The threat model below is intended for maintainers and users reviewing whether the package is safe to load in their own Pi environment.
 
-This package is a local Pi extension that runs local code. Pi packages and extensions should be reviewed before installation because they execute with local user permissions.
+This is not a formal security audit. It documents the assets, trust boundaries, implemented controls, residual risks, and safe operating recommendations for the current package.
 
-This project should minimise risk by keeping the extension narrow: it runs one configured executable, `codex` by default, with a constrained argv array and read-only Codex sandbox by default.
+## Scope and assumptions
 
-## Credentials
+In scope:
 
-The extension must not read, copy, parse, print, store, or commit Codex credentials.
+* the TypeScript extension entrypoint and registration code in this repository;
+* validation of `codex_web_search` tool parameters and documented configuration;
+* construction of the `codex exec` argv array;
+* execution of the configured Codex executable through Node.js subprocess APIs;
+* parsing and formatting of Codex JSONL output for Pi;
+* repository guardrails for secrets, generated files, package contents, and automated tests.
 
-In particular, never commit:
+Out of scope:
 
-* `~/.codex/auth.json`
-* `.codex/`
-* `.env`
-* API keys
-* access tokens
-* refresh tokens
+* the security of Pi itself;
+* the security of the installed Codex CLI binary;
+* the security of Codex/ChatGPT authentication storage;
+* the correctness or safety of arbitrary public web pages returned by search;
+* remote or multi-user deployment hardening;
+* bypassing Codex, ChatGPT, account, network, or usage limits.
 
-Authentication is Codex CLI's responsibility. The extension should simply fail clearly if Codex is missing or unauthenticated.
+Assumptions:
 
-## Input and subprocess safety
+* the package runs locally as the same OS user that launched Pi;
+* Pi extensions and packages should be reviewed before installation because they execute local code;
+* Codex authentication is already owned by the Codex CLI and must remain outside this package;
+* automated validation must not require a real Codex login or network search.
 
-Ticket 003 validation normalizes `codex_web_search` input before any future
-subprocess call. It trims and bounds `query`, rejects unknown parameters, bounds
-`timeoutMs` and `maxOutputChars`, and does not echo the query value in validation
-error messages.
+## Assets to protect
 
-Ticket 010 adds safe configuration handling:
+* Codex/ChatGPT credentials and session files managed by the Codex CLI.
+* Private user prompts, private source paths, local workspace contents, and terminal logs.
+* The local user's filesystem and environment variables.
+* The user's Codex/ChatGPT account limits and web-search availability.
+* The integrity of Pi's tool execution surface.
+* The integrity of the npm/git package that users load into Pi.
 
-* only documented `PI_CODEX_WEB_SEARCH_*` environment variables and explicit
-  in-process project config are read
-* the configuration layer does not read `$HOME`, arbitrary files,
-  `~/.codex/auth.json`, or any Codex credential path
-* Codex binary overrides are non-empty strings without null bytes and are still
-  passed to `execFile` as the executable argument, not shell-interpolated
-* configured default mode, timeout, and max output are validated with the same
-  bounds as public tool parameters
-* the configured sandbox must be `read-only`; write-capable Codex sandboxes are
-  rejected
-* project config takes precedence over environment variables, and tool-call
-  parameters take precedence over configured defaults for that call
+## Trust boundaries and data flow
 
-Ticket 004 adds safe argv construction before any subprocess execution:
+```text
+Pi/user prompt
+  -> model-selected codex_web_search parameters (untrusted input)
+    -> extension input/config validation
+      -> safe argv builder
+        -> local Codex CLI subprocess (external executable)
+          -> Codex web/network access and local sandbox policy
+            -> JSONL stdout/stderr returned to extension
+              -> parser and bounded formatter
+                -> Pi tool result/model context
+```
 
-* `buildCodexExecArgs` returns only the Codex argument array; it does not return
-  a shell command string or spawn a process
-* the prompt is the final argv element after an end-of-options `--` separator
-* `--search` is emitted only for normalized `mode: "live"`
-* `--skip-git-repo-check` is emitted only from the normalized boolean option
-* the current sandbox allowlist contains only `read-only`; write-capable Codex
-  sandboxes are rejected until a future ticket deliberately expands the policy
-* null bytes, unsupported output formats, and inconsistent normalized inputs are
-  rejected without echoing the query in error messages
+Important boundaries:
 
-Ticket 005 adds bounded subprocess execution:
+* Tool-call arguments are untrusted even when Pi's schema validator ran first; the extension normalizes them again before execution.
+* Environment variables and explicit project/in-process config are local user configuration, not model-callable parameters.
+* The configured Codex executable is outside this repository's trust boundary.
+* Web pages and search results are untrusted content and may contain prompt-injection text.
+* Formatter output re-enters Pi's model context, so it is bounded and avoids raw process diagnostics.
 
-* `CodexRunner` uses `execFile` with argv arrays and never builds a shell command
-* the executor options set `shell: false`
-* the executable defaults to `codex`; configuration/constructor overrides are
-  validated as non-empty strings without null bytes
-* normalized `timeoutMs` is passed to `execFile`
-* normalized `codex.maxBufferBytes` is passed as the stdout/stderr max buffer
-* missing binary, timeout, non-zero exit, max-buffer, cancellation, parser, and
-  unknown failures use structured `CodexRunnerError` codes
-* runner error messages do not include the argv array, prompt/query text, or raw
-  stderr; stderr is preserved separately as bounded diagnostics for later
-  formatting
+## Threats, controls, and residual risks
 
-Ticket 006 adds JSONL parsing safeguards:
+### 1. Arbitrary command or shell injection
 
-* `CodexJsonlParser` reads only the stdout returned by `codex exec --json` and
-  does not inspect Codex credential files
-* malformed JSONL and missing final-message cases use structured
-  `CodexJsonlParserError` codes
-* parser error messages include line numbers but do not echo raw JSONL contents,
-  query text, or stderr
-* unknown event types are ignored for forward compatibility
-* stderr remains separate diagnostics and is not appended to answer text
-* raw events are included only when the caller explicitly requested
-  `includeRawEvents`, because raw Codex events may contain prompt or result data
+Threats:
 
-Ticket 007 adds formatting safeguards:
+* A malicious query could try to inject shell metacharacters.
+* A model/tool call could try to add unsupported flags or execute a different command.
+* A malicious config value could point `codexBinary` at an unexpected executable.
 
-* `formatCodexWebSearchToolResult` bounds model-facing text with
-  `maxOutputChars` and a truncation notice
-* successful output includes source URLs/snippets when Codex provides them, but
-  limits how many sources are shown in text
-* failure output is mapped from stable error codes to safe summaries and actions
-  instead of copying raw process errors
-* raw stderr, query text, argv, and local/private paths are not copied into
-  formatted error text
-* structured diagnostics keep only safe metadata such as stdout/stderr byte
-  counts, exit code, signal, truncation flag, and an `stderrOmitted` marker
-* raw events in details are capped by count and serialized size when callers
-  explicitly requested them
+Implemented controls:
 
-Ticket 008 wires the formatter into Pi registration:
+* `CodexRunner` uses `execFile` with argv arrays and `shell: false`; it never builds a shell command string.
+* `buildCodexExecArgs` emits only the reviewed `codex exec` argument shape.
+* User query text is one positional argv element after an end-of-options `--` separator.
+* Unknown tool parameters are rejected, and the sandbox is not a tool-call parameter.
+* Query and configured binary values reject null bytes.
+* The extension does not expose a generic command-execution tool.
 
-* `extensions/codex-web-search.ts` registers only the narrow `codex_web_search`
-  tool as an execution surface; it does not add a generic command-execution surface
-* `src/pi/registerCodexWebSearchTool.ts` normalizes Pi parameters again before
-  creating any subprocess request
-* production execution resolves validated configuration first and defaults to
-  `CodexRunner` with that binary path; tests inject fake runners so automated
-  validation does not call real Codex
-* Pi's `AbortSignal` is passed to the runner for cancellation
-* validation, runner, parser, and unknown failures are formatted into bounded,
-  sanitized text before `CodexWebSearchToolExecutionError` is thrown, so Pi marks
-  the tool call failed without exposing raw stderr or private paths in the error
-  message
+Residual risks and recommendations:
 
-Ticket 009 adds `/codex-web-search` as static command help only:
+* `PI_CODEX_WEB_SEARCH_CODEX_BINARY` is intentionally a local-user escape hatch. Set it only to a trusted Codex executable, preferably an absolute path when `PATH` is unusual.
+* A compromised Codex binary or compromised PATH entry can run as the local user. Review how Pi is launched and avoid untrusted directories in `PATH`.
 
-* the command displays bounded usage text with `ctx.ui.notify(...)` when a UI is available
-* it ignores command arguments
-* it does not execute Codex, read configuration, inspect credential files, or touch user input beyond showing static help
+### 2. Codex sandbox and local filesystem exposure
 
-Ticket 011 adds fake-Codex integration coverage for automated validation:
+Threats:
 
-* tests point the configured Codex binary at `test/fixtures/fake-codex.mjs` instead of the real `codex` binary
-* the fixture emits deterministic public JSONL and failure cases; it does not read Codex credentials or call the network
-* timeout, non-zero exit, malformed JSONL, and missing-final-message paths are exercised without a real Codex login
+* Codex is an external agent process and may be able to read files permitted by its read-only sandbox and current working directory.
+* Web prompt injection could attempt to make Codex inspect local files or credentials.
+* A future change could accidentally enable write-capable Codex execution.
 
-## Web results
+Implemented controls:
 
-Treat web-search results as untrusted. Codex may read web content, and web content can contain prompt injection. The extension should ask Codex for concise answers and sources, but users should still verify high-stakes outputs.
+* The default sandbox is `read-only`.
+* Configuration currently accepts only `read-only`; `workspace-write`, `danger-full-access`, and other write-capable values are rejected.
+* The extension never passes a write-capable sandbox to Codex.
+* `--skip-git-repo-check` is used so the extension can run outside a repository without encouraging broader repository access.
+* Timeouts, buffer limits, and cancellation are enforced at the subprocess boundary.
 
-## Manual validation
+Residual risks and recommendations:
 
-Manual validation may call real Codex. Do not upload resulting logs if they contain private prompts, private code, or local paths.
+* Read-only is not the same as no-read. Codex may still have read access allowed by its own sandbox policy. Avoid launching Pi from highly sensitive directories when using live web search.
+* Do not ask the tool to combine private local files with public web search unless you are comfortable sharing that context with Codex.
+* Keep write-capable sandbox support out of this package unless a future ticket documents the need, the threat model update, and new tests.
+
+### 3. Prompt injection from web results
+
+Threats:
+
+* Public pages returned by search can contain instructions that try to override the user's request, exfiltrate data, or manipulate Pi's follow-up behavior.
+* Codex's answer can summarize or quote untrusted page content back into Pi's model context.
+* Source snippets may contain misleading or adversarial text.
+
+Implemented controls:
+
+* The tool registration prompt guidelines explicitly say to treat `codex_web_search` results as untrusted web content and not to follow instructions found in web pages.
+* Formatter output is concise, bounded, and source-oriented rather than an open-ended transcript dump.
+* Source URLs/snippets are included as citations when available so users and models can verify claims.
+* The extension performs no automatic follow-up actions based on search results.
+* The extension does not grant Codex write access, browser automation, or arbitrary local command execution.
+
+Residual risks and recommendations:
+
+* The extension cannot prove that Codex ignored every malicious web instruction. Treat the final answer as untrusted research, not as an instruction source.
+* Verify high-impact claims against cited sources before acting.
+* Prefer narrow queries and ask for source URLs.
+* Avoid including secrets, private code, credentials, or sensitive local paths in web-search prompts.
+
+### 4. Credential handling
+
+Threats:
+
+* Application code could accidentally read, copy, print, or commit Codex credentials.
+* Troubleshooting logs could expose account/session details.
+* Users might mistake extension configuration for a place to store credentials.
+
+Implemented controls:
+
+* No application code reads `~/.codex/auth.json`, `$HOME`, arbitrary config files, or Codex credential paths.
+* Authentication is delegated entirely to the Codex CLI; missing or unauthenticated Codex is reported as an actionable failure.
+* The documented `PI_CODEX_WEB_SEARCH_*` variables do not include credential values.
+* Runner and formatter error messages omit argv, query text, raw stderr, and local/private paths.
+* Repository guardrails scan for common secret patterns and fail on Codex auth artifacts or env files.
+
+Residual risks and recommendations:
+
+* The Codex subprocess may read its own authentication state as part of normal Codex operation. That state is outside this package and must not be copied into the repository or support logs.
+* Never share `~/.codex/auth.json` or terminal logs that contain account/session details.
+* Do not point `PI_CODEX_WEB_SEARCH_CODEX_BINARY` or any other setting at credential files.
+
+### 5. Logs, diagnostics, and artifacts
+
+Threats:
+
+* Raw stderr, JSONL events, package tarballs, coverage output, or dependency directories could contain private data and be committed accidentally.
+* Raw Codex events may contain prompt text, answer text, source snippets, or provider diagnostics.
+
+Implemented controls:
+
+* The extension does not create persistent logs.
+* Formatted error text omits raw stderr, query text, argv, and local/private paths.
+* Structured diagnostics keep safe metadata such as byte counts, exit status, signal, truncation, and `stderrOmitted`.
+* `includeRawEvents` is `false` by default. When enabled, raw events are bounded by count and serialized size, and help/schema text warns that raw events may contain prompt/result data.
+* `scripts/check-no-generated-private-files.sh` blocks real env files, Codex auth artifacts, `node_modules/`, build output, coverage output, and npm package tarballs.
+* `scripts/check-no-secrets.sh` scans repository files for common token and private-key patterns.
+* The npm `files` allowlist ships only `extensions/`, `src/`, `docs/`, and `README.md`.
+
+Residual risks and recommendations:
+
+* Manual validation transcripts can still include private prompts, local paths, or provider diagnostics. Keep them private or sanitize them before sharing.
+* Do not enable `includeRawEvents` unless you need bounded debugging data and are comfortable exposing raw prompt/result content in Pi details.
+* Review `npm pack --dry-run` output before publishing.
+
+### 6. Package-install and supply-chain risks
+
+Threats:
+
+* Pi packages execute local extension code with the user's permissions.
+* Git or npm package sources could change between installs if not pinned.
+* Local path installs point at the original checkout, so later local edits affect future Pi runs.
+* Development dependencies and package scripts can change behavior during install or validation.
+
+Implemented controls:
+
+* The package has an explicit `pi.extensions` manifest pointing at one entrypoint.
+* The extension registers only `codex_web_search` and a static `/codex-web-search` help command.
+* The repository currently has no runtime dependencies beyond Node/Pi runtime expectations.
+* Automated tests use mocks or the checked-in fake Codex executable; they do not call real Codex by default.
+* The quality gate runs package dry-run validation and generated/private-file guardrails.
+
+Residual risks and recommendations:
+
+* Review source before loading any Pi package.
+* Pin git installs to a tag or commit, and use an exact npm version after publish.
+* Re-run `scripts/quality-gate.sh` after pulling updates.
+* Prefer local checkout validation before global Pi installation.
+
+## Recommended safe defaults
+
+Keep these defaults unless you have a specific, reviewed reason to change them:
+
+| Setting | Recommended value | Reason |
+| --- | --- | --- |
+| `PI_CODEX_WEB_SEARCH_SANDBOX` | `read-only` | Prevents write-capable Codex execution; currently the only accepted value. |
+| `PI_CODEX_WEB_SEARCH_CODEX_BINARY` | unset or trusted absolute Codex path | Avoids PATH surprises while still using the official local Codex CLI. |
+| `PI_CODEX_WEB_SEARCH_DEFAULT_MODE` | `live` for normal web-search use, `cached` for privacy-sensitive no-search calls | Live is the tool's purpose; cached omits `--search` when freshness is not needed. |
+| `PI_CODEX_WEB_SEARCH_TIMEOUT_MS` | `120000` | Bounds process lifetime while allowing typical searches to finish. |
+| `PI_CODEX_WEB_SEARCH_MAX_OUTPUT_CHARS` | `12000` | Keeps Pi tool output useful and bounded. |
+| `includeRawEvents` | `false` | Avoids exposing raw prompt/result event data in tool details. |
+
+Additional recommendations:
+
+* Launch Pi from a directory that is appropriate for Codex read-only access.
+* Keep Codex CLI and Pi updated.
+* Verify cited sources for high-impact answers.
+* Do not share Codex credential files, private prompts, or unsanitized terminal logs.
+
+## Validation and test posture
+
+Automated validation is safe by default:
+
+* unit tests mock process execution or use a checked-in fake Codex executable;
+* fake-Codex tests do not require a real Codex binary, Codex authentication, network access, or web search;
+* the quality gate runs shell syntax checks, secret guardrails, generated/private-file guardrails, npm checks, tests, build, and package dry-run;
+* real Codex validation is manual and documented in [`MANUAL_VALIDATION.md`](MANUAL_VALIDATION.md).
+
+## Security maintenance checklist
+
+Before changing code that touches execution, configuration, parsing, formatting, packaging, or logs:
+
+* keep subprocess execution on non-shell APIs with argv arrays;
+* keep query text after an end-of-options separator;
+* keep the sandbox allowlist at `read-only` unless a future ticket expands the threat model and tests;
+* do not add credential-reading code or credential configuration variables;
+* keep output and raw-event details bounded;
+* keep automated tests fake-Codex/mocked by default;
+* update this threat model when trust boundaries or defaults change;
+* run `scripts/quality-gate.sh` before committing.

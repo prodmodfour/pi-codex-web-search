@@ -29,7 +29,7 @@ export const CODEX_WEB_SEARCH_HELP_TEXT = [
   `- mode: \"live\" (default; uses Codex --search) or \"cached\" (omits --search).`,
   `- timeoutMs: ${CODEX_WEB_SEARCH_DEFAULTS.timeoutMs} default; ${CODEX_WEB_SEARCH_LIMITS.timeoutMsMin}-${CODEX_WEB_SEARCH_LIMITS.timeoutMsMax} ms allowed.`,
   `- maxOutputChars: ${CODEX_WEB_SEARCH_DEFAULTS.maxOutputChars} default; ${CODEX_WEB_SEARCH_LIMITS.maxOutputCharsMin}-${CODEX_WEB_SEARCH_LIMITS.maxOutputCharsMax} chars allowed.`,
-  "- includeRawEvents: false by default; only enable for bounded debugging details.",
+  "- includeRawEvents: false by default; only enable for bounded debugging details because raw events may contain prompt/result data.",
   "",
   "Default live invocation: codex exec --json --search --skip-git-repo-check --sandbox read-only -- <query>",
   "Prerequisites: install the Codex CLI and run codex login. This extension never reads Codex credential files.",

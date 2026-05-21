@@ -329,7 +329,7 @@ Commit when complete.
 
 ## 014 — Add security threat model
 
-Status: TODO
+Status: DONE
 
 Write the project's security model and align code/docs to it.
 

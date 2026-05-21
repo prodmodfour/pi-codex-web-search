@@ -103,6 +103,7 @@ test("extension help command shows bounded codex_web_search usage help", async (
   assert.match(notifications[0].message, /codex_web_search help/);
   assert.match(notifications[0].message, /mode: "live"/);
   assert.match(notifications[0].message, /--sandbox read-only/);
+  assert.match(notifications[0].message, /raw events may contain prompt\/result data/);
   assert.match(notifications[0].message, /never reads Codex credential files/);
   assert.equal(notifications[0].message.length < 2_000, true);
 });
