@@ -1,8 +1,51 @@
 # Usage
 
+## Load the package
+
+See [`INSTALLATION.md`](INSTALLATION.md) for local path, git, and npm-style Pi package loading commands plus package-manifest and auto-discovery notes.
+
+Common local development flow:
+
+```bash
+npm install
+npm test
+pi -e .
+```
+
+Common project-local install from a checkout:
+
+```bash
+pi install -l /absolute/path/to/pi-codex-web-search
+pi
+```
+
+When Codex is authenticated with a ChatGPT/Codex account, calls made by `codex_web_search` use the local Codex CLI and may consume that account's Codex/ChatGPT plan limits. They do not use OpenAI API web-search billing by default. The extension cannot bypass Codex, ChatGPT, account, network, or web-search availability limits.
+
 ## Extension help command
 
 When the package is loaded as a Pi extension, invoke `/codex-web-search` to show concise static help for the `codex_web_search` tool. The command explains the parameters, defaults, and read-only Codex invocation shape. It does not execute Codex or read credential files.
+
+## Prompt examples
+
+Use `codex_web_search` when the user asks for current or source-backed public web information. The model is most likely to call the tool when the prompt names it directly:
+
+```text
+Use the codex_web_search tool in live mode to search the web for the latest Node.js LTS release line. Return two concise bullets and include source URLs.
+```
+
+```text
+Use codex_web_search to find current installation guidance for Pi packages from local path, git, and npm sources. Summarize the commands with source URLs.
+```
+
+```text
+Use codex_web_search in live mode to compare the latest stable releases of two public libraries. Include the release dates and cited sources.
+```
+
+```text
+Use codex_web_search with mode cached to answer from Codex's existing context only: what does this extension do? Keep it brief.
+```
+
+Use `mode: "live"` when freshness matters. Use `mode: "cached"` when you intentionally want the extension to omit Codex `--search`; cached mode still invokes the local Codex CLI.
 
 ## Configuring `codex_web_search`
 

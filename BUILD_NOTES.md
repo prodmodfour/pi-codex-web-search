@@ -2,24 +2,24 @@
 
 ## Current state
 
-Tickets 000 through 012 are complete. The repository now has a TypeScript/npm Pi package skeleton, project-specific validation guardrails, a frozen Pi extension/package contract, the finalized `codex_web_search` tool API contract, a safe `codex exec` argv builder, a bounded Codex subprocess runner, a JSONL parser for `codex exec --json` stdout, a bounded formatter for Pi tool output, Pi tool registration wiring, a small optional Pi slash-command help surface, safe configuration handling, a fake-Codex integration test harness, and a manual real-Codex validation guide.
+Tickets 000 through 013 are complete. The repository now has a TypeScript/npm Pi package skeleton, project-specific validation guardrails, a frozen Pi extension/package contract, the finalized `codex_web_search` tool API contract, a safe `codex exec` argv builder, a bounded Codex subprocess runner, a JSONL parser for `codex exec --json` stdout, a bounded formatter for Pi tool output, Pi tool registration wiring, a small optional Pi slash-command help surface, safe configuration handling, a fake-Codex integration test harness, a manual real-Codex validation guide, and user-facing installation/package documentation.
 
-Ticket 012 added in this cycle:
+Ticket 013 added in this cycle:
 
-* expanded `docs/MANUAL_VALIDATION.md` from a scaffold into a step-by-step human validation guide for machines with Pi, Codex CLI, user authentication, and network access
-* documented Codex setup commands, including `npm install -g @openai/codex` and `codex login`
-* documented a direct `codex exec --search --skip-git-repo-check --sandbox read-only ...` smoke test before loading Pi
-* documented temporary `pi -e` loading and project-local `pi install -l` loading for the local package
-* added expected output shapes for the direct Codex smoke test, `/codex-web-search` help command, and live `codex_web_search` Pi tool call
-* added manual troubleshooting notes for missing Codex, unauthenticated Codex, disabled web search or cached/live confusion, network failures, and timeouts
-* added repeated reminders not to inspect, share, upload, or commit `~/.codex/auth.json` or private validation logs
-* updated README status text to point at the manual validation guide instead of calling it a future ticket
+* added `docs/INSTALLATION.md` with local path, git source, and npm-style Pi package loading commands
+* documented one-session (`pi -e`), project-local (`pi install -l`), and global (`pi install`) loading patterns
+* documented the package `pi.extensions` manifest, TypeScript extension loading, conventional extension auto-discovery, package `files` allowlist, and package-loading caveats
+* updated README with install commands for local checkout, git source, and npm-style source usage once published
+* added prompt examples that should trigger `codex_web_search`, including live and cached mode examples
+* added a clear statement that authenticated Codex/ChatGPT usage may consume Codex/ChatGPT plan limits and does not use OpenAI API web-search billing by default
+* documented unsupported or brittle areas, including Codex CLI/schema drift, real-search dependency on local auth/network/account capability, local single-user scope, read-only sandbox support, and the absence of ChatGPT Web scraping/browser automation/usage-limit bypasses
+* updated `docs/USAGE.md` and `docs/EXTENSION_SPEC.md` to point at the installation docs and freeze the exact documented load paths
 
-No Codex live search, authenticated Codex run, real Codex CLI execution, Codex credential access, browser automation, or network research was used in this cycle. The new guide documents how a human can run those checks manually, but automated validation remains fake-Codex/mocked by default.
+No Codex live search, authenticated Codex run, real Codex CLI execution, Codex credential access, browser automation, or network research was used in this cycle. The package documentation explains how a human can perform those checks manually, but automated validation remains fake-Codex/mocked by default.
 
 ## Quality gates
 
-Ran `scripts/quality-gate.sh` successfully after implementing Ticket 012.
+Ran `scripts/quality-gate.sh` successfully after implementing Ticket 013.
 
 The passing gate performed:
 
@@ -35,13 +35,15 @@ The passing gate performed:
 * cleanup of `node_modules/` created by the gate
 * generated/private-file guardrail after cleanup
 
-The npm package dry-run included only the intended package files from the package `files` allowlist. Test fixtures are not shipped in the npm package. `node_modules/` was removed by the gate before exit.
+The npm package dry-run included only the intended package files from the package `files` allowlist, now including `docs/INSTALLATION.md`. Test fixtures are not shipped in the npm package. `node_modules/` was removed by the gate before exit.
 
 ## Known blockers and limitations
 
 None for automated quality validation.
 
-Manual real-Codex validation still requires a human machine with Pi installed, Codex CLI installed, `codex login` completed, a Pi model/provider configured, and network access. This remains an external manual activity; the repository now documents the procedure but does not run it during the automated gate.
+Manual real-Codex validation still requires a human machine with Pi installed, Codex CLI installed, `codex login` completed, a Pi model/provider configured, and network access. This remains an external manual activity; the repository documents the procedure but does not run it during the automated gate.
+
+The package is not documented as published to npm yet. The npm-style Pi commands are the intended source syntax once `pi-codex-web-search` is published under the expected name/version; local path and git source loading are documented for current validation.
 
 The fake-Codex fixture is intentionally a deterministic test executable, not a Codex emulator. It validates the expected safe argv shape and covers representative success/failure cases, but real Codex JSONL schemas and authentication behavior still require the manual validation path.
 
@@ -63,4 +65,4 @@ The `/codex-web-search` command uses Pi's UI notification surface when available
 
 ## Next recommended ticket
 
-Ticket 013 — Add installation and package docs.
+Ticket 014 — Add security threat model.

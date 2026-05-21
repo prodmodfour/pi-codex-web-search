@@ -2,7 +2,9 @@
 
 `pi-codex-web-search` is a TypeScript Pi package for a `codex_web_search` tool. The package is intended to let Pi call the local Codex CLI for web-enabled answers while relying on the user's existing Codex/ChatGPT authentication.
 
-> Status: build in progress. The current package registers `codex_web_search` plus a `/codex-web-search` help command, validates tool parameters and safe configuration, runs the bounded Codex subprocess pipeline, parses `codex exec --json` output, formats concise Pi tool results, covers the path with a fake-Codex executable integration harness, and documents manual real-Codex validation.
+When Codex is authenticated with a ChatGPT/Codex account, live searches made through this extension may consume that account's Codex/ChatGPT plan limits. They do not use OpenAI API web-search billing by default, and this package cannot bypass Codex, ChatGPT, account, or network limits.
+
+> Status: build in progress. The current package registers `codex_web_search` plus a `/codex-web-search` help command, validates tool parameters and safe configuration, runs the bounded Codex subprocess pipeline, parses `codex exec --json` output, formats concise Pi tool results, covers the path with a fake-Codex executable integration harness, and documents installation plus manual real-Codex validation.
 
 ## Current package shape
 
@@ -21,7 +23,7 @@ src/pi/registerCodexWebSearchTool.ts      # Pi tool registration and execution w
 test/package-shape.test.mjs               # smoke tests for the package skeleton
 test/fake-codex-integration.test.mjs      # fake Codex executable integration coverage
 test/fixtures/fake-codex.mjs              # deterministic fake codex exec fixture
-docs/                                # design, security, usage, validation, and quality-gate notes
+docs/                                # install, design, security, usage, validation, and quality-gate notes
 scripts/quality-gate.sh              # local validation gate used by the build loop
 ```
 
@@ -36,6 +38,50 @@ The Pi manifest currently points to the TypeScript entrypoint:
 ```
 
 Pi loads TypeScript extensions through its extension runtime, so this scaffold ships TypeScript source rather than compiled JavaScript. The frozen Pi extension/package assumptions for this build are documented in [`docs/EXTENSION_SPEC.md`](docs/EXTENSION_SPEC.md).
+
+## Install and load in Pi
+
+Review the source before installing any Pi package: extensions execute with local user permissions. Install and authenticate Codex only if you want real live search:
+
+```bash
+npm install -g @openai/codex
+codex login
+```
+
+Local checkout, one-session load:
+
+```bash
+git clone <repo-url> pi-codex-web-search
+cd pi-codex-web-search
+npm install
+npm test
+pi -e .
+```
+
+Local checkout, project install:
+
+```bash
+pi install -l /absolute/path/to/pi-codex-web-search
+pi
+```
+
+Git source, project install:
+
+```bash
+pi install -l git:github.com/<owner>/pi-codex-web-search@<tag-or-commit>
+pi
+```
+
+npm-style source after the package is published:
+
+```bash
+pi install -l npm:pi-codex-web-search@0.0.0
+pi
+```
+
+Use `pi install ...` without `-l` for a global user install, or `pi -e ...` for a temporary one-session load. The repository package version is currently `0.0.0`; replace it with the published version you intend to run. Detailed local, git, npm, manifest, and auto-discovery notes are in [`docs/INSTALLATION.md`](docs/INSTALLATION.md).
+
+After loading, run `/codex-web-search` in Pi to confirm the help command is registered.
 
 ## Development prerequisites
 
@@ -75,6 +121,24 @@ The extension registers a Pi tool named `codex_web_search` that:
 * bounds returned Pi tool text with a truncation notice
 * throws sanitized Pi tool failures for invalid input, missing Codex, timeout, non-zero exit, oversized output, cancellation, parser failures, or unknown errors
 
+## Prompt examples
+
+Prompts that should trigger `codex_web_search` are the ones that need current, source-backed web information. Examples:
+
+```text
+Use the codex_web_search tool in live mode to find the latest Node.js LTS release line. Return two concise bullets with source URLs.
+```
+
+```text
+Use codex_web_search to check the current Pi package installation docs and summarize the commands for local, git, and npm sources.
+```
+
+```text
+Use codex_web_search with mode cached to answer from Codex's existing context only: what does this extension do? Keep it brief.
+```
+
+Prefer `mode: "live"` when freshness matters. Use `mode: "cached"` only when you intentionally want to omit Codex `--search`.
+
 ## Configuration
 
 The package entrypoint reads only these documented environment variables. Explicit in-process/project config passed to `registerCodexWebSearchTool(pi, { config })` takes precedence over environment values; tool-call parameters still take precedence over configured defaults for `mode`, `timeoutMs`, and `maxOutputChars`.
@@ -92,6 +156,14 @@ The configuration layer does not read Codex credentials, `~/.codex/auth.json`, `
 ## Help command
 
 When loaded in Pi, the extension also registers `/codex-web-search`. The command displays concise usage help for `codex_web_search`, including parameters, defaults, the read-only live-search invocation shape, and the reminder that the extension never reads Codex credential files. It is informational only and does not execute Codex.
+
+## Caveats
+
+* Real web search depends on the installed Codex CLI, local `codex login` state, network access, and account-level search availability.
+* Codex CLI arguments and JSONL event shapes can change; automated tests use representative fake-Codex fixtures, while real behavior needs manual validation.
+* The package currently targets local single-user Pi usage, not remote or multi-user execution.
+* The only supported Codex sandbox is `read-only`; write-capable Codex execution is intentionally unsupported.
+* The extension does not scrape ChatGPT Web, automate browsers, bypass usage limits, or provide a generic command-execution tool.
 
 ## Safety notes
 

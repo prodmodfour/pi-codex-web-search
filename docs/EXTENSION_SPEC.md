@@ -169,10 +169,16 @@ Frozen assumptions:
 
 Pi can load this package through these paths:
 
-* temporary local test: `pi -e ./path/to/pi-codex-web-search`;
+* temporary local package test: `pi -e /absolute/path/to/pi-codex-web-search` or `pi -e .` from the package root;
 * temporary direct entrypoint test: `pi -e ./extensions/codex-web-search.ts`;
-* global package install: `pi install npm:pi-codex-web-search` or a git source;
-* project package install: `pi install -l ./path/to/pi-codex-web-search`.
+* project local-path install: `pi install -l /absolute/path/to/pi-codex-web-search`;
+* global local-path install: `pi install /absolute/path/to/pi-codex-web-search`;
+* project git install: `pi install -l git:github.com/<owner>/pi-codex-web-search@<tag-or-commit>`;
+* global git install: `pi install git:github.com/<owner>/pi-codex-web-search@<tag-or-commit>`;
+* project npm install after publish: `pi install -l npm:pi-codex-web-search@<version>`;
+* global npm install after publish: `pi install npm:pi-codex-web-search@<version>`.
+
+User-facing installation docs, including npm-publication caveats and verification prompts, live in [`INSTALLATION.md`](INSTALLATION.md).
 
 Documented Pi install locations:
 

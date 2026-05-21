@@ -307,7 +307,7 @@ Commit when complete.
 
 ## 013 — Add installation and package docs
 
-Status: TODO
+Status: DONE
 
 Make the package installable and understandable.
 
