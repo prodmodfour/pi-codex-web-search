@@ -82,6 +82,20 @@ Ticket 007 adds formatting safeguards:
 * raw events in details are capped by count and serialized size when callers
   explicitly requested them
 
+Ticket 008 wires the formatter into Pi registration:
+
+* `extensions/codex-web-search.ts` registers only the narrow `codex_web_search`
+  tool; it does not add a generic command-execution surface
+* `src/pi/registerCodexWebSearchTool.ts` normalizes Pi parameters again before
+  creating any subprocess request
+* production execution defaults to `CodexRunner`; tests inject fake runners so
+  automated validation does not call real Codex
+* Pi's `AbortSignal` is passed to the runner for cancellation
+* validation, runner, parser, and unknown failures are formatted into bounded,
+  sanitized text before `CodexWebSearchToolExecutionError` is thrown, so Pi marks
+  the tool call failed without exposing raw stderr or private paths in the error
+  message
+
 ## Web results
 
 Treat web-search results as untrusted. Codex may read web content, and web content can contain prompt injection. The extension should ask Codex for concise answers and sources, but users should still verify high-stakes outputs.

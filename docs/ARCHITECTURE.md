@@ -19,7 +19,7 @@ extensions/codex-web-search.ts
 src/pi/piExtensionContract.ts          # current local contract/test subset
 src/tool/codexWebSearchApi.ts          # tool input/result types and validation
 src/codex/buildCodexArgs.ts            # safe codex exec argv construction
-src/pi/registerCodexWebSearchTool.ts   # future registration module
+src/pi/registerCodexWebSearchTool.ts   # Pi registration and execution wiring
 src/codex/CodexRunner.ts
 src/codex/CodexJsonlParser.ts
 src/output/formatToolResult.ts
@@ -96,7 +96,22 @@ Codex web-search results into Pi tool results. It:
 * bounds structured `rawEvents` details when callers explicitly requested them.
 
 The formatter intentionally does not execute Codex or register the Pi tool;
-Ticket 008 owns registration and wiring.
+`src/pi/registerCodexWebSearchTool.ts` owns that boundary.
+
+## Implemented Pi-registration boundary
+
+`src/pi/registerCodexWebSearchTool.ts` owns the Pi tool definition. It:
+
+* registers `codex_web_search` with label, description, prompt snippet, and prompt guidelines that name the tool explicitly;
+* exposes a JSON-schema-compatible parameter schema matching the Ticket 003 API and rejecting unknown properties;
+* normalizes Pi-provided parameters again before execution so the internal pipeline does not rely solely on provider/tool-call validation;
+* uses a test-injectable runner seam, defaulting to the execFile-based `CodexRunner`;
+* passes Pi's `AbortSignal` through to the runner;
+* parses successful JSONL stdout with `parseCodexJsonlToolResult(...)`;
+* formats successful results with `formatCodexWebSearchToolResult(...)`;
+* formats failures and then throws `CodexWebSearchToolExecutionError` so Pi marks the tool call as failed while the thrown message remains sanitized and bounded.
+
+The extension entrypoint in `extensions/codex-web-search.ts` only calls this registration helper.
 
 ## Test strategy
 
@@ -109,5 +124,5 @@ Expected automated coverage:
 * subprocess timeout/error handling
 * JSONL parsing
 * output formatting
-* Pi extension registration with a mock Pi object
+* Pi extension registration with a mock Pi object and fake runner
 * fake-Codex integration path

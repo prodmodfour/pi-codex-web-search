@@ -1,10 +1,13 @@
 /**
  * Pi Codex Web Search extension entrypoint.
  *
- * This is a Ticket 000 placeholder. It intentionally does not register the
- * codex_web_search tool or call Codex yet; later tickets add the validated API,
- * runner, parser, formatter, and final Pi tool registration.
+ * Keep this file light: all tool registration and execution wiring lives in
+ * src/pi/registerCodexWebSearchTool.ts so it can be unit-tested without a real
+ * Pi runtime or Codex login.
  */
-export default function codexWebSearchExtension(_pi: unknown): void {
-  // No-op placeholder so Pi can discover and load the package safely.
+import { registerCodexWebSearchTool } from "../src/pi/registerCodexWebSearchTool.js";
+import type { PiExtensionApi } from "../src/pi/piExtensionContract.js";
+
+export default function codexWebSearchExtension(pi: PiExtensionApi): void {
+  registerCodexWebSearchTool(pi);
 }

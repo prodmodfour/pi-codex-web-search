@@ -196,7 +196,7 @@ Commit when complete.
 
 ## 008 — Register the Pi tool
 
-Status: TODO
+Status: DONE
 
 Wire the internal implementation into a Pi extension entrypoint.
 

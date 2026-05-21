@@ -1,20 +1,21 @@
 # Pi Codex Web Search Extension
 
-`pi-codex-web-search` is a TypeScript Pi package scaffold for a future `codex_web_search` tool. The package is intended to let Pi call the local Codex CLI for web-enabled answers while relying on the user's existing Codex/ChatGPT authentication.
+`pi-codex-web-search` is a TypeScript Pi package for a `codex_web_search` tool. The package is intended to let Pi call the local Codex CLI for web-enabled answers while relying on the user's existing Codex/ChatGPT authentication.
 
-> Status: build in progress. The current package exposes a safe, no-op placeholder extension entrypoint, the typed/validated `codex_web_search` API contract, a safe `codex exec` argv builder, a bounded Codex subprocess runner, a JSONL parser for `codex exec --json` output, and a Pi tool-result formatter. The placeholder Pi extension still does **not** call Codex or register the final Pi tool yet.
+> Status: build in progress. The current package registers `codex_web_search`, validates its parameters, runs the bounded Codex subprocess pipeline, parses `codex exec --json` output, and formats concise Pi tool results. Configuration, fake-executable integration tests, and full manual real-Codex validation docs are still future tickets.
 
 ## Current package shape
 
 ```text
 package.json                         # npm metadata plus the pi.extensions manifest
-extensions/codex-web-search.ts       # placeholder Pi extension entrypoint
-src/index.ts                         # shared package metadata and exported API/argv contracts
+extensions/codex-web-search.ts       # Pi extension entrypoint that registers codex_web_search
+src/index.ts                         # shared package metadata and exported API/argv/registration contracts
 src/tool/codexWebSearchApi.ts        # codex_web_search input/result types and validation
 src/codex/buildCodexArgs.ts          # safe codex exec argv construction
 src/codex/CodexRunner.ts             # execFile-based Codex subprocess runner
 src/codex/CodexJsonlParser.ts        # parser for codex exec --json JSONL events
 src/output/formatToolResult.ts       # bounded Pi tool-result formatting
+src/pi/registerCodexWebSearchTool.ts # Pi tool registration and execution wiring
 test/package-shape.test.mjs          # smoke tests for the package skeleton
 docs/                                # design, security, usage, validation, and quality-gate notes
 scripts/quality-gate.sh              # local validation gate used by the build loop
@@ -53,9 +54,9 @@ npm run quality
 
 The gate runs shell syntax checks, secret and generated-file guardrails, npm validation scripts, and a package dry-run. See [`docs/QUALITY_GATE.md`](docs/QUALITY_GATE.md) for the full checklist.
 
-## Intended final behavior
+## Current tool behavior
 
-Later tickets will replace the placeholder with a Pi tool named `codex_web_search` that:
+The extension registers a Pi tool named `codex_web_search` that:
 
 * validates user input before invoking Codex
 * accepts `query`, optional `mode`, `timeoutMs`, `maxOutputChars`, and `includeRawEvents`
@@ -68,6 +69,7 @@ Later tickets will replace the placeholder with a Pi tool named `codex_web_searc
 * parses `codex exec --json` JSONL, using the last completed agent message as the answer and preserving stderr diagnostics separately
 * formats parsed Codex output into concise Pi tool results with source URLs/snippets when available
 * bounds returned Pi tool text with a truncation notice
+* throws sanitized Pi tool failures for invalid input, missing Codex, timeout, non-zero exit, oversized output, cancellation, parser failures, or unknown errors
 
 ## Safety notes
 

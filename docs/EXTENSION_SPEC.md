@@ -5,8 +5,8 @@
 This document freezes the Pi extension/package contract that this package targets.
 It also freezes the Ticket 003 `codex_web_search` tool API, the Ticket 004 safe
 `codex exec` argv-builder contract, the Ticket 005 bounded subprocess-runner
-contract, the Ticket 006 JSONL-parser contract, and the Ticket 007 tool-result
-formatter contract. Later tickets own final Pi registration.
+contract, the Ticket 006 JSONL-parser contract, the Ticket 007 tool-result
+formatter contract, and the Ticket 008 Pi registration boundary.
 
 ## Research basis
 
@@ -48,7 +48,7 @@ Target assumptions:
 
 ## Frozen `registerTool` contract
 
-The final extension will register one tool named `codex_web_search` through
+The extension registers one tool named `codex_web_search` through
 `pi.registerTool(...)`.
 
 The target tool-definition shape is the subset used by Pi `0.75.4`:
@@ -187,8 +187,7 @@ than calling the OpenAI API web-search endpoint.
 ## Finalized `codex_web_search` tool API
 
 Ticket 003 defines the TypeScript contract and validation functions in
-`src/tool/codexWebSearchApi.ts`. The final Pi registration should expose these
-parameters and reject unknown properties.
+`src/tool/codexWebSearchApi.ts`. The Pi registration exposes these parameters and rejects unknown properties.
 
 ```ts
 interface CodexWebSearchToolInput {
@@ -447,10 +446,37 @@ Formatter behavior:
 * raw JSONL events are included in `details.rawEvents` only when already present
   in the normalized result, and are capped by count and serialized size.
 
-Registration code should pass the normalized input's `maxOutputChars` to the
-formatter. Pi tool execution may still throw for failed calls; this formatter
-also supports normalized failure values so future registration/error tests can
-produce consistent text before throwing or reporting failure.
+Registration code passes the normalized input's `maxOutputChars` to the
+formatter. Pi tool execution throws for failed calls; registration formats the
+normalized failure first so the thrown message is bounded, actionable, and
+sanitized.
+
+## Pi registration contract
+
+Ticket 008 implements `src/pi/registerCodexWebSearchTool.ts` and wires it from
+`extensions/codex-web-search.ts`.
+
+Registration exports and behavior:
+
+* `registerCodexWebSearchTool(pi, options)` registers exactly one tool named
+  `codex_web_search`.
+* `createCodexWebSearchToolDefinition(options)` exposes the tool definition for
+  unit tests and future composition.
+* `CODEX_WEB_SEARCH_TOOL_PARAMETERS` is a JSON-schema-compatible object with the
+  Ticket 003 properties, defaults, bounds, and `additionalProperties: false`.
+  This mirrors the TypeBox-serializable shape Pi expects without adding a
+  runtime dependency.
+* `CodexWebSearchToolRunner` is a narrow test seam with `run(input, options)`;
+  production defaults to `new CodexRunner()`.
+* `executeCodexWebSearchTool(...)` normalizes unknown Pi parameters, calls the
+  runner, parses JSONL with `parseCodexJsonlToolResult(...)`, and formats the
+  normalized success result.
+* On validation, runner, parser, or unknown failures, registration builds a
+  normalized failure, calls `formatCodexWebSearchToolResult(...)`, and throws
+  `CodexWebSearchToolExecutionError` with the formatted text as the error
+  message. The error exposes the formatted `toolResult` for tests but does not
+  retain raw stderr or query text.
+* The Pi `AbortSignal` argument is passed through to `CodexRunner`.
 
 ## Safety requirements
 
@@ -460,4 +486,6 @@ produce consistent text before throwing or reporting failure.
 * subprocess time and stdout/stderr buffers are bounded by Ticket 005;
 * formatted Pi tool text is bounded by Ticket 007 and omits raw stderr from
   user-facing error output;
+* Ticket 008 throws formatted, sanitized failures so Pi marks failed tool calls
+  as errors without exposing raw stderr or local/private paths in the message;
 * automated tests must not invoke real Codex by default.

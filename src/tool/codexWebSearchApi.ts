@@ -1,5 +1,5 @@
 /**
- * Public and internal API contract for the future codex_web_search Pi tool.
+ * Public and internal API contract for the codex_web_search Pi tool.
  *
  * This module intentionally performs no Codex execution. It only defines the
  * tool input/result shapes and normalizes untrusted tool-call arguments into a

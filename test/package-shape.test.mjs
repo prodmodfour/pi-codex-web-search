@@ -10,7 +10,7 @@ test("package declares the Pi extension entrypoint", () => {
   assert.deepEqual(packageJson.pi?.extensions, ["./extensions/codex-web-search.ts"]);
 });
 
-test("placeholder extension source exists", () => {
+test("extension source exists", () => {
   assert.equal(existsSync(new URL("../extensions/codex-web-search.ts", import.meta.url)), true);
 });
 

@@ -33,6 +33,18 @@ export {
 } from "./output/formatToolResult.js";
 
 export {
+  CODEX_WEB_SEARCH_TOOL_DESCRIPTION,
+  CODEX_WEB_SEARCH_TOOL_LABEL,
+  CODEX_WEB_SEARCH_TOOL_PARAMETERS,
+  CODEX_WEB_SEARCH_TOOL_PROMPT_GUIDELINES,
+  CODEX_WEB_SEARCH_TOOL_PROMPT_SNIPPET,
+  CodexWebSearchToolExecutionError,
+  createCodexWebSearchToolDefinition,
+  executeCodexWebSearchTool,
+  registerCodexWebSearchTool,
+} from "./pi/registerCodexWebSearchTool.js";
+
+export {
   CODEX_WEB_SEARCH_DEFAULTS,
   CODEX_WEB_SEARCH_LIMITS,
   CODEX_WEB_SEARCH_MODES,
@@ -81,6 +93,13 @@ export type {
   CodexWebSearchToolResultDetails,
   FormatCodexWebSearchToolResultOptions,
 } from "./output/formatToolResult.js";
+
+export type {
+  CodexWebSearchPiToolDefinition,
+  CodexWebSearchToolExecutionErrorOptions,
+  CodexWebSearchToolRunner,
+  RegisterCodexWebSearchToolOptions,
+} from "./pi/registerCodexWebSearchTool.js";
 
 export type {
   CodexOutputFormat,
