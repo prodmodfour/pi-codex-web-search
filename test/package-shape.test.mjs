@@ -4,6 +4,8 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const packageJsonUrl = new URL("../package.json", import.meta.url);
+const contributingDocsUrl = new URL("../CONTRIBUTING.md", import.meta.url);
+const licenseDocsUrl = new URL("../LICENSE.md", import.meta.url);
 const qualityGateDocsUrl = new URL("../docs/QUALITY_GATE.md", import.meta.url);
 const manualValidationDocsUrl = new URL("../docs/MANUAL_VALIDATION.md", import.meta.url);
 const localPiProjectExampleDocsUrl = new URL("../docs/EXAMPLE_LOCAL_PI_PROJECT.md", import.meta.url);
@@ -38,7 +40,16 @@ test("package declares expected npm scripts", () => {
 });
 
 test("package files allowlist stays narrow", () => {
-  assert.deepEqual(packageJson.files, ["extensions", "src", "docs", "README.md"]);
+  assert.deepEqual(packageJson.files, ["extensions", "src", "docs", "README.md", "CONTRIBUTING.md", "LICENSE.md"]);
+});
+
+test("repository contribution and license docs exist", async () => {
+  assert.equal(existsSync(contributingDocsUrl), true);
+  assert.equal(existsSync(licenseDocsUrl), true);
+
+  const license = await readFile(licenseDocsUrl, "utf8");
+  assert.match(license, /MIT License/);
+  assert.match(packageJson.license, /MIT/);
 });
 
 test("pack check uses the package contents validator", () => {

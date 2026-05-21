@@ -9,10 +9,12 @@ const repoRoot = resolve(scriptDir, "..");
 const packageJsonPath = resolve(repoRoot, "package.json");
 const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
 
-const EXPECTED_FILES_ALLOWLIST = ["extensions", "src", "docs", "README.md"];
+const EXPECTED_FILES_ALLOWLIST = ["extensions", "src", "docs", "README.md", "CONTRIBUTING.md", "LICENSE.md"];
 const REQUIRED_PACKED_FILES = [
   "package.json",
   "README.md",
+  "CONTRIBUTING.md",
+  "LICENSE.md",
   "extensions/codex-web-search.ts",
   "src/index.ts",
   "docs/ARCHITECTURE.md",
@@ -30,6 +32,8 @@ const REQUIRED_PACKED_FILES = [
 const ALLOWED_PACKAGE_PATHS = [
   /^package\.json$/,
   /^README\.md$/,
+  /^CONTRIBUTING\.md$/,
+  /^LICENSE\.md$/,
   /^extensions\//,
   /^src\//,
   /^docs\//,

@@ -198,3 +198,7 @@ The current argv builder returns arguments for `CodexRunner`, which calls the co
 `formatCodexWebSearchToolResult` converts normalized success/failure results into Pi text content plus structured details. The formatter includes source URLs/snippets when available, enforces `maxOutputChars`, adds a truncation notice, and omits raw stderr/query text from user-facing error output.
 
 Automated tests use mocks or the deterministic fake executable under `test/fixtures/fake-codex.mjs`. Runtime troubleshooting is documented in [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md). Real Codex validation is documented in [`docs/MANUAL_VALIDATION.md`](docs/MANUAL_VALIDATION.md) and requires a local user who has installed Codex and run `codex login`.
+
+## Contributing and license
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for local setup, pull request expectations, and security reminders. This project is licensed under the MIT License; see [`LICENSE.md`](LICENSE.md).

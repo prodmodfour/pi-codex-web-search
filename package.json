@@ -2,6 +2,7 @@
   "name": "pi-codex-web-search",
   "version": "0.0.0",
   "description": "Pi extension package for a Codex CLI-backed web search tool.",
+  "license": "MIT",
   "type": "module",
   "engines": {
     "node": ">=20"
@@ -16,7 +17,9 @@
     "extensions",
     "src",
     "docs",
-    "README.md"
+    "README.md",
+    "CONTRIBUTING.md",
+    "LICENSE.md"
   ],
   "pi": {
     "extensions": [
