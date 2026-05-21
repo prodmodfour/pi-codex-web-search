@@ -4,7 +4,7 @@
 
 This package is a local Pi extension that runs local code. Pi packages and extensions should be reviewed before installation because they execute with local user permissions.
 
-This project should minimise risk by keeping the extension narrow: it runs one known executable, `codex`, with a constrained argv array and read-only Codex sandbox by default.
+This project should minimise risk by keeping the extension narrow: it runs one configured executable, `codex` by default, with a constrained argv array and read-only Codex sandbox by default.
 
 ## Credentials
 
@@ -28,6 +28,21 @@ subprocess call. It trims and bounds `query`, rejects unknown parameters, bounds
 `timeoutMs` and `maxOutputChars`, and does not echo the query value in validation
 error messages.
 
+Ticket 010 adds safe configuration handling:
+
+* only documented `PI_CODEX_WEB_SEARCH_*` environment variables and explicit
+  in-process project config are read
+* the configuration layer does not read `$HOME`, arbitrary files,
+  `~/.codex/auth.json`, or any Codex credential path
+* Codex binary overrides are non-empty strings without null bytes and are still
+  passed to `execFile` as the executable argument, not shell-interpolated
+* configured default mode, timeout, and max output are validated with the same
+  bounds as public tool parameters
+* the configured sandbox must be `read-only`; write-capable Codex sandboxes are
+  rejected
+* project config takes precedence over environment variables, and tool-call
+  parameters take precedence over configured defaults for that call
+
 Ticket 004 adds safe argv construction before any subprocess execution:
 
 * `buildCodexExecArgs` returns only the Codex argument array; it does not return
@@ -44,8 +59,8 @@ Ticket 005 adds bounded subprocess execution:
 
 * `CodexRunner` uses `execFile` with argv arrays and never builds a shell command
 * the executor options set `shell: false`
-* the executable defaults to `codex`; constructor overrides are validated as
-  non-empty strings without null bytes
+* the executable defaults to `codex`; configuration/constructor overrides are
+  validated as non-empty strings without null bytes
 * normalized `timeoutMs` is passed to `execFile`
 * normalized `codex.maxBufferBytes` is passed as the stdout/stderr max buffer
 * missing binary, timeout, non-zero exit, max-buffer, cancellation, parser, and
@@ -88,8 +103,9 @@ Ticket 008 wires the formatter into Pi registration:
   tool as an execution surface; it does not add a generic command-execution surface
 * `src/pi/registerCodexWebSearchTool.ts` normalizes Pi parameters again before
   creating any subprocess request
-* production execution defaults to `CodexRunner`; tests inject fake runners so
-  automated validation does not call real Codex
+* production execution resolves validated configuration first and defaults to
+  `CodexRunner` with that binary path; tests inject fake runners so automated
+  validation does not call real Codex
 * Pi's `AbortSignal` is passed to the runner for cancellation
 * validation, runner, parser, and unknown failures are formatted into bounded,
   sanitized text before `CodexWebSearchToolExecutionError` is thrown, so Pi marks

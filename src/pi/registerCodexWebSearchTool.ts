@@ -9,6 +9,17 @@ import {
   CodexRunner,
   CodexRunnerError,
 } from "../codex/CodexRunner.js";
+import {
+  CodexWebSearchConfigError,
+  CODEX_WEB_SEARCH_CONFIG_DEFAULTS,
+  loadCodexWebSearchConfig,
+} from "../config/codexWebSearchConfig.js";
+import type {
+  CodexWebSearchConfig,
+  CodexWebSearchConfigInput,
+  CodexWebSearchEnvironment,
+  LoadCodexWebSearchConfigOptions,
+} from "../config/codexWebSearchConfig.js";
 import type {
   CodexRunnerRawResult,
   CodexRunnerRunOptions,
@@ -62,47 +73,53 @@ export const CODEX_WEB_SEARCH_TOOL_PROMPT_GUIDELINES = [
  * objects. Keeping this as data avoids adding a runtime dependency while still
  * exposing the same shape a TypeBox object would serialize to.
  */
-export const CODEX_WEB_SEARCH_TOOL_PARAMETERS = Object.freeze({
-  type: "object",
-  additionalProperties: false,
-  required: ["query"],
-  properties: {
-    query: {
-      type: "string",
-      minLength: 1,
-      maxLength: CODEX_WEB_SEARCH_LIMITS.queryMaxChars,
-      description:
-        "Search question or research task passed to Codex as one positional argument. The extension trims and bounds this value before execution.",
+export function createCodexWebSearchToolParameters(
+  config: CodexWebSearchConfig = CODEX_WEB_SEARCH_CONFIG_DEFAULTS,
+) {
+  return Object.freeze({
+    type: "object",
+    additionalProperties: false,
+    required: ["query"],
+    properties: {
+      query: {
+        type: "string",
+        minLength: 1,
+        maxLength: CODEX_WEB_SEARCH_LIMITS.queryMaxChars,
+        description:
+          "Search question or research task passed to Codex as one positional argument. The extension trims and bounds this value before execution.",
+      },
+      mode: {
+        type: "string",
+        enum: [...CODEX_WEB_SEARCH_MODES],
+        default: config.defaultMode,
+        description:
+          "Use 'live' to request Codex --search, or 'cached' to omit the live-search flag.",
+      },
+      timeoutMs: {
+        type: "integer",
+        minimum: CODEX_WEB_SEARCH_LIMITS.timeoutMsMin,
+        maximum: CODEX_WEB_SEARCH_LIMITS.timeoutMsMax,
+        default: config.timeoutMs,
+        description: "Maximum time in milliseconds to allow the Codex subprocess to run.",
+      },
+      maxOutputChars: {
+        type: "integer",
+        minimum: CODEX_WEB_SEARCH_LIMITS.maxOutputCharsMin,
+        maximum: CODEX_WEB_SEARCH_LIMITS.maxOutputCharsMax,
+        default: config.maxOutputChars,
+        description: "Maximum characters returned in the model-facing Pi tool result.",
+      },
+      includeRawEvents: {
+        type: "boolean",
+        default: CODEX_WEB_SEARCH_DEFAULTS.includeRawEvents,
+        description:
+          "Include bounded raw Codex JSONL events in structured details for debugging. Leave false for normal use.",
+      },
     },
-    mode: {
-      type: "string",
-      enum: [...CODEX_WEB_SEARCH_MODES],
-      default: CODEX_WEB_SEARCH_DEFAULTS.mode,
-      description:
-        "Use 'live' to request Codex --search, or 'cached' to omit the live-search flag.",
-    },
-    timeoutMs: {
-      type: "integer",
-      minimum: CODEX_WEB_SEARCH_LIMITS.timeoutMsMin,
-      maximum: CODEX_WEB_SEARCH_LIMITS.timeoutMsMax,
-      default: CODEX_WEB_SEARCH_DEFAULTS.timeoutMs,
-      description: "Maximum time in milliseconds to allow the Codex subprocess to run.",
-    },
-    maxOutputChars: {
-      type: "integer",
-      minimum: CODEX_WEB_SEARCH_LIMITS.maxOutputCharsMin,
-      maximum: CODEX_WEB_SEARCH_LIMITS.maxOutputCharsMax,
-      default: CODEX_WEB_SEARCH_DEFAULTS.maxOutputChars,
-      description: "Maximum characters returned in the model-facing Pi tool result.",
-    },
-    includeRawEvents: {
-      type: "boolean",
-      default: CODEX_WEB_SEARCH_DEFAULTS.includeRawEvents,
-      description:
-        "Include bounded raw Codex JSONL events in structured details for debugging. Leave false for normal use.",
-    },
-  },
-} as const);
+  } as const);
+}
+
+export const CODEX_WEB_SEARCH_TOOL_PARAMETERS = createCodexWebSearchToolParameters();
 
 export interface CodexWebSearchToolRunner {
   run(input: NormalizedCodexWebSearchInput, options?: CodexRunnerRunOptions): Promise<CodexRunnerRawResult>;
@@ -111,6 +128,10 @@ export interface CodexWebSearchToolRunner {
 export interface RegisterCodexWebSearchToolOptions {
   /** Test seam. Production registration uses the default execFile-based CodexRunner. */
   runner?: CodexWebSearchToolRunner;
+  /** Explicit project/in-process config. Takes precedence over environment values. */
+  config?: CodexWebSearchConfigInput;
+  /** Environment source for documented PI_CODEX_WEB_SEARCH_* variables. */
+  env?: CodexWebSearchEnvironment;
 }
 
 export type CodexWebSearchPiToolDefinition = PiToolDefinition<
@@ -148,7 +169,8 @@ export function registerCodexWebSearchTool(
 export function createCodexWebSearchToolDefinition(
   options: RegisterCodexWebSearchToolOptions = {},
 ): CodexWebSearchPiToolDefinition {
-  const runner = options.runner ?? new CodexRunner();
+  const config = loadCodexWebSearchConfig(createConfigLoadOptions(options));
+  const runner = options.runner ?? new CodexRunner({ codexBinary: config.codexBinary });
 
   return {
     name: CODEX_WEB_SEARCH_TOOL_NAME,
@@ -156,27 +178,33 @@ export function createCodexWebSearchToolDefinition(
     description: CODEX_WEB_SEARCH_TOOL_DESCRIPTION,
     promptSnippet: CODEX_WEB_SEARCH_TOOL_PROMPT_SNIPPET,
     promptGuidelines: [...CODEX_WEB_SEARCH_TOOL_PROMPT_GUIDELINES],
-    parameters: CODEX_WEB_SEARCH_TOOL_PARAMETERS,
+    parameters: createCodexWebSearchToolParameters(config),
 
     async execute(_toolCallId, params, signal) {
-      return executeCodexWebSearchTool(params, runner, signal);
+      return executeCodexWebSearchTool(params, runner, signal, { config });
     },
   };
+}
+
+export interface ExecuteCodexWebSearchToolOptions {
+  config?: CodexWebSearchConfig;
 }
 
 export async function executeCodexWebSearchTool(
   params: unknown,
   runner: CodexWebSearchToolRunner,
   signal: AbortSignal | undefined,
+  options: ExecuteCodexWebSearchToolOptions = {},
 ): Promise<CodexWebSearchPiToolResult> {
   let normalized: NormalizedCodexWebSearchInput;
+  const config = options.config ?? loadCodexWebSearchConfig();
 
   try {
-    normalized = normalizeCodexWebSearchInput(params);
+    normalized = normalizeCodexWebSearchInput(params, { defaults: toInputDefaults(config) });
   } catch (error) {
     throw createToolExecutionError(
       createFailureFromError(error, undefined),
-      getFailureMaxOutputChars(params),
+      getFailureMaxOutputChars(params, config),
     );
   }
 
@@ -190,6 +218,28 @@ export async function executeCodexWebSearchTool(
       normalized.maxOutputChars,
     );
   }
+}
+
+function createConfigLoadOptions(
+  options: RegisterCodexWebSearchToolOptions,
+): LoadCodexWebSearchConfigOptions {
+  const loadOptions: LoadCodexWebSearchConfigOptions = {};
+  if (options.env !== undefined) {
+    loadOptions.env = options.env;
+  }
+  if (options.config !== undefined) {
+    loadOptions.config = options.config;
+  }
+  return loadOptions;
+}
+
+function toInputDefaults(config: CodexWebSearchConfig) {
+  return {
+    mode: config.defaultMode,
+    timeoutMs: config.timeoutMs,
+    maxOutputChars: config.maxOutputChars,
+    sandbox: config.sandbox,
+  };
 }
 
 function createRunOptions(signal: AbortSignal | undefined): CodexRunnerRunOptions {
@@ -220,6 +270,14 @@ function createFailureFromError(
     return createFailure({
       code: "invalid_input",
       message: "The provided codex_web_search parameters did not pass validation.",
+      retryable: false,
+    });
+  }
+
+  if (error instanceof CodexWebSearchConfigError) {
+    return createFailure({
+      code: "invalid_input",
+      message: "The codex_web_search configuration did not pass validation.",
       retryable: false,
     });
   }
@@ -279,9 +337,9 @@ function createFailure(options: {
   return failure;
 }
 
-function getFailureMaxOutputChars(params: unknown): number {
+function getFailureMaxOutputChars(params: unknown, config: CodexWebSearchConfig): number {
   if (!isPlainObject(params)) {
-    return CODEX_WEB_SEARCH_DEFAULTS.maxOutputChars;
+    return config.maxOutputChars;
   }
 
   const requested = params.maxOutputChars;
@@ -294,7 +352,7 @@ function getFailureMaxOutputChars(params: unknown): number {
     return requested;
   }
 
-  return CODEX_WEB_SEARCH_DEFAULTS.maxOutputChars;
+  return config.maxOutputChars;
 }
 
 function firstTextContent(toolResult: CodexWebSearchPiToolResult): string {

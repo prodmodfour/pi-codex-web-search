@@ -20,6 +20,16 @@ export {
 } from "./codex/CodexRunner.js";
 
 export {
+  CODEX_WEB_SEARCH_CONFIG_DEFAULTS,
+  CODEX_WEB_SEARCH_CONFIG_ENV_VARS,
+  CodexWebSearchConfigError,
+  formatCodexWebSearchConfigIssues,
+  loadCodexWebSearchConfig,
+  readCodexWebSearchEnvConfig,
+  validateCodexWebSearchConfig,
+} from "./config/codexWebSearchConfig.js";
+
+export {
   CodexJsonlParserError,
   isCodexJsonlParserError,
   parseCodexJsonlOutput,
@@ -49,6 +59,7 @@ export {
   CODEX_WEB_SEARCH_TOOL_PROMPT_SNIPPET,
   CodexWebSearchToolExecutionError,
   createCodexWebSearchToolDefinition,
+  createCodexWebSearchToolParameters,
   executeCodexWebSearchTool,
   registerCodexWebSearchTool,
 } from "./pi/registerCodexWebSearchTool.js";
@@ -69,6 +80,17 @@ export type {
   SafeCodexSandboxMode,
   SupportedCodexOutputFormat,
 } from "./codex/buildCodexArgs.js";
+
+export type {
+  CodexWebSearchConfig,
+  CodexWebSearchConfigInput,
+  CodexWebSearchConfigValidationCode,
+  CodexWebSearchConfigValidationIssue,
+  CodexWebSearchConfigValidationResult,
+  CodexWebSearchConfigValidationSource,
+  CodexWebSearchEnvironment,
+  LoadCodexWebSearchConfigOptions,
+} from "./config/codexWebSearchConfig.js";
 
 export type {
   CodexArgsBuilder,
@@ -107,6 +129,7 @@ export type {
   CodexWebSearchPiToolDefinition,
   CodexWebSearchToolExecutionErrorOptions,
   CodexWebSearchToolRunner,
+  ExecuteCodexWebSearchToolOptions,
   RegisterCodexWebSearchToolOptions,
 } from "./pi/registerCodexWebSearchTool.js";
 
@@ -115,6 +138,8 @@ export type {
   CodexSandboxMode,
   CodexWebSearchDiagnostics,
   CodexWebSearchErrorDetails,
+  CodexWebSearchInputDefaults,
+  CodexWebSearchInputNormalizationOptions,
   CodexWebSearchFailureCode,
   CodexWebSearchMode,
   CodexWebSearchNormalizedFailure,

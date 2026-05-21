@@ -24,7 +24,7 @@ export const CODEX_WEB_SEARCH_HELP_TEXT = [
   "",
   `Use ${CODEX_WEB_SEARCH_TOOL_NAME} when you need current, source-backed web information through the local Codex CLI.`,
   "",
-  "Tool parameters:",
+  "Tool parameters (built-in defaults shown; documented PI_CODEX_WEB_SEARCH_* environment variables can change defaults):",
   `- query (required): search question or research task, 1-${CODEX_WEB_SEARCH_LIMITS.queryMaxChars} chars after trimming.`,
   `- mode: \"live\" (default; uses Codex --search) or \"cached\" (omits --search).`,
   `- timeoutMs: ${CODEX_WEB_SEARCH_DEFAULTS.timeoutMs} default; ${CODEX_WEB_SEARCH_LIMITS.timeoutMsMin}-${CODEX_WEB_SEARCH_LIMITS.timeoutMsMax} ms allowed.`,

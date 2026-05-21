@@ -6,8 +6,8 @@ This document freezes the Pi extension/package contract that this package target
 It also freezes the Ticket 003 `codex_web_search` tool API, the Ticket 004 safe
 `codex exec` argv-builder contract, the Ticket 005 bounded subprocess-runner
 contract, the Ticket 006 JSONL-parser contract, the Ticket 007 tool-result
-formatter contract, the Ticket 008 Pi registration boundary, and the Ticket 009
-optional command/help boundary.
+formatter contract, the Ticket 008 Pi registration boundary, the Ticket 009
+optional command/help boundary, and the Ticket 010 configuration boundary.
 
 ## Research basis
 
@@ -238,9 +238,9 @@ interface CodexWebSearchToolInput {
 | Parameter | Required | Default | Validation | Meaning |
 | --- | --- | --- | --- | --- |
 | `query` | yes | none | string, trimmed, 1-4000 chars | Search question or task passed to Codex as data, never shell-interpolated. |
-| `mode` | no | `"live"` | `"live"` or `"cached"` | `"live"` requests Codex `--search`; `"cached"` explicitly omits `--search`. |
-| `timeoutMs` | no | `120000` | integer from `1000` to `300000` | Subprocess timeout budget for a later runner. |
-| `maxOutputChars` | no | `12000` | integer from `500` to `50000` | Maximum formatted Pi tool-output length for a later formatter. |
+| `mode` | no | `"live"` unless configured | `"live"` or `"cached"` | `"live"` requests Codex `--search`; `"cached"` explicitly omits `--search`. |
+| `timeoutMs` | no | `120000` unless configured | integer from `1000` to `300000` | Subprocess timeout budget for the runner. |
+| `maxOutputChars` | no | `12000` unless configured | integer from `500` to `50000` | Maximum formatted Pi tool-output length for the formatter. |
 | `includeRawEvents` | no | `false` | boolean | Allows later parser/formatter code to include bounded raw JSONL events in structured details. |
 
 Live search is on by default because this is a web-search tool. Callers can set
@@ -257,16 +257,16 @@ builder and runner tickets:
 sandbox: read-only
 outputFormat: jsonl
 skipGitRepoCheck: true
-codex binary: codex (runner default, not a tool parameter yet)
-timeoutMs: 120000
+codex binary: codex (configuration default, not a tool parameter)
+timeoutMs: 120000 unless configured or overridden by tool call
 maxBufferBytes: 2097152
-maxOutputChars: 12000
+maxOutputChars: 12000 unless configured or overridden by tool call
 includeRawEvents: false
 ```
 
-The sandbox is intentionally not exposed as a tool-call parameter in Ticket 003.
-Future configuration work may add validated configuration overrides, but the
-default remains read-only.
+The sandbox is intentionally not exposed as a tool-call parameter. Ticket 010
+adds validated configuration for it, but the only accepted value remains
+`read-only`; write-capable Codex sandboxes are not supported by this package.
 
 ### Normalized result shape
 
@@ -318,6 +318,32 @@ The API reserves these failure codes for runner, parser, and formatter modules:
 Validation errors use structured issue codes and messages that do not echo the
 query value.
 
+## Configuration contract
+
+Ticket 010 implements `src/config/codexWebSearchConfig.ts`.
+
+Supported settings:
+
+| Setting | Environment variable | Project config key | Default | Validation |
+| --- | --- | --- | --- | --- |
+| Codex binary | `PI_CODEX_WEB_SEARCH_CODEX_BINARY` | `codexBinary` | `codex` | non-empty string without null bytes |
+| Default mode | `PI_CODEX_WEB_SEARCH_DEFAULT_MODE` | `defaultMode` | `live` | `live` or `cached` |
+| Default timeout | `PI_CODEX_WEB_SEARCH_TIMEOUT_MS` | `timeoutMs` | `120000` | integer from `1000` to `300000` |
+| Default max output | `PI_CODEX_WEB_SEARCH_MAX_OUTPUT_CHARS` | `maxOutputChars` | `12000` | integer from `500` to `50000` |
+| Sandbox | `PI_CODEX_WEB_SEARCH_SANDBOX` | `sandbox` | `read-only` | currently only `read-only` |
+
+Precedence is explicit project/in-process config over documented environment
+variables over built-in defaults. The public tool-call parameters `mode`,
+`timeoutMs`, and `maxOutputChars` then override configured defaults for that
+single call. `codexBinary` and `sandbox` are configuration-only settings, not
+model-callable parameters.
+
+The package entrypoint reads environment variables through
+`loadCodexWebSearchConfig()`. Tests and custom extensions can pass an isolated
+`env` object or explicit `config` object to `registerCodexWebSearchTool(...)`.
+The configuration code does not read Codex credentials, `~/.codex/auth.json`,
+`$HOME`, or arbitrary project files.
+
 ## Safe Codex argv-builder contract
 
 Ticket 004 implements `src/codex/buildCodexArgs.ts`. It exports
@@ -362,7 +388,7 @@ Ticket 005 implements `src/codex/CodexRunner.ts`.
 
 Runner defaults and seams:
 
-* binary path defaults to `codex`;
+* binary path defaults to `codex` unless the registration layer passes a validated configuration value;
 * constructor-level `codexBinary` override is validated as a non-empty string
   without null bytes;
 * the default executor is `node:child_process` `execFile`;
@@ -498,14 +524,16 @@ Registration exports and behavior:
 * `createCodexWebSearchToolDefinition(options)` exposes the tool definition for
   unit tests and future composition.
 * `CODEX_WEB_SEARCH_TOOL_PARAMETERS` is a JSON-schema-compatible object with the
-  Ticket 003 properties, defaults, bounds, and `additionalProperties: false`.
+  Ticket 003 properties, built-in defaults, bounds, and `additionalProperties: false`.
   This mirrors the TypeBox-serializable shape Pi expects without adding a
   runtime dependency.
+* `createCodexWebSearchToolParameters(config)` builds the same schema with
+  defaults updated from validated configuration.
 * `CodexWebSearchToolRunner` is a narrow test seam with `run(input, options)`;
-  production defaults to `new CodexRunner()`.
-* `executeCodexWebSearchTool(...)` normalizes unknown Pi parameters, calls the
-  runner, parses JSONL with `parseCodexJsonlToolResult(...)`, and formats the
-  normalized success result.
+  production defaults to `new CodexRunner({ codexBinary: config.codexBinary })`.
+* `executeCodexWebSearchTool(...)` normalizes unknown Pi parameters with the
+  validated configuration defaults, calls the runner, parses JSONL with
+  `parseCodexJsonlToolResult(...)`, and formats the normalized success result.
 * On validation, runner, parser, or unknown failures, registration builds a
   normalized failure, calls `formatCodexWebSearchToolResult(...)`, and throws
   `CodexWebSearchToolExecutionError` with the formatted text as the error
@@ -525,7 +553,8 @@ Registration exports and behavior:
 
 * no shell command construction from query input;
 * no reading, copying, or logging Codex credentials;
-* no default write sandbox and no write-capable sandbox allowlist in Ticket 004;
+* no default write sandbox and no write-capable sandbox allowlist in Ticket 004 or Ticket 010 configuration;
+* configuration reads only documented environment variables or explicit in-process config and never reads Codex credential files;
 * subprocess time and stdout/stderr buffers are bounded by Ticket 005;
 * formatted Pi tool text is bounded by Ticket 007 and omits raw stderr from
   user-facing error output;

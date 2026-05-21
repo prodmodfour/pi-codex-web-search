@@ -25,6 +25,26 @@ test("normalizes required codex_web_search input with safe defaults", () => {
   });
 });
 
+test("normalizes configurable defaults when optional tool parameters are omitted", () => {
+  const normalized = api.normalizeCodexWebSearchInput(
+    { query: "current docs" },
+    {
+      defaults: {
+        mode: "cached",
+        timeoutMs: 5_000,
+        maxOutputChars: 700,
+        sandbox: "read-only",
+      },
+    },
+  );
+
+  assert.equal(normalized.mode, "cached");
+  assert.equal(normalized.liveSearch, false);
+  assert.equal(normalized.timeoutMs, 5_000);
+  assert.equal(normalized.maxOutputChars, 700);
+  assert.equal(normalized.codex.sandbox, "read-only");
+});
+
 test("normalizes optional codex_web_search parameters", () => {
   const normalized = api.normalizeCodexWebSearchInput({
     query: "Summarize current TypeScript release news",

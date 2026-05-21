@@ -239,7 +239,7 @@ Commit when complete.
 
 ## 010 — Add configuration handling
 
-Status: TODO
+Status: DONE
 
 Make safe user configuration explicit.
 

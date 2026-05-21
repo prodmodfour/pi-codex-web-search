@@ -23,10 +23,33 @@ function createFakeRunner(handler) {
   };
 }
 
+function clearConfigEnvForExtensionTest() {
+  const names = Object.values(pkg.CODEX_WEB_SEARCH_CONFIG_ENV_VARS);
+  const previous = new Map(names.map((name) => [name, process.env[name]]));
+  for (const name of names) {
+    delete process.env[name];
+  }
+
+  return () => {
+    for (const [name, value] of previous) {
+      if (value === undefined) {
+        delete process.env[name];
+      } else {
+        process.env[name] = value;
+      }
+    }
+  };
+}
+
 test("extension entrypoint registers codex_web_search with useful metadata and schema", () => {
   const { api, registeredTools, registeredCommands } = createMockPiApi();
+  const restoreEnv = clearConfigEnvForExtensionTest();
 
-  extensionModule.default(api);
+  try {
+    extensionModule.default(api);
+  } finally {
+    restoreEnv();
+  }
 
   assert.equal(registeredTools.length, 1);
   assert.equal(registeredCommands.size, 1);
@@ -53,8 +76,13 @@ test("extension entrypoint registers codex_web_search with useful metadata and s
 test("extension help command shows bounded codex_web_search usage help", async () => {
   const { api, registeredCommands } = createMockPiApi();
   const notifications = [];
+  const restoreEnv = clearConfigEnvForExtensionTest();
 
-  extensionModule.default(api);
+  try {
+    extensionModule.default(api);
+  } finally {
+    restoreEnv();
+  }
 
   const command = registeredCommands.get("codex-web-search");
   assert.ok(command);
@@ -127,7 +155,7 @@ test("registered tool normalizes parameters, runs fake Codex, parses JSONL, and 
   });
   const { api, registeredTools } = createMockPiApi();
 
-  pkg.registerCodexWebSearchTool(api, { runner });
+  pkg.registerCodexWebSearchTool(api, { runner, env: {} });
   const result = await registeredTools[0].execute(
     "call-1",
     {
@@ -163,11 +191,87 @@ test("registered tool normalizes parameters, runs fake Codex, parses JSONL, and 
   assert.equal(result.details.maxOutputChars, 1_000);
 });
 
+test("registered tool applies config defaults and lets tool-call parameters take precedence", async () => {
+  const env = {
+    [pkg.CODEX_WEB_SEARCH_CONFIG_ENV_VARS.defaultMode]: "cached",
+    [pkg.CODEX_WEB_SEARCH_CONFIG_ENV_VARS.timeoutMs]: "5000",
+    [pkg.CODEX_WEB_SEARCH_CONFIG_ENV_VARS.maxOutputChars]: "900",
+    [pkg.CODEX_WEB_SEARCH_CONFIG_ENV_VARS.sandbox]: "read-only",
+  };
+  const runner = createFakeRunner(() => {
+    const stdout = jsonlEvent({
+      type: "item.completed",
+      item: {
+        id: "msg-config",
+        type: "agent_message",
+        text: "Configured default answer.",
+      },
+    });
+
+    return {
+      stdout,
+      stderr: "",
+      diagnostics: {
+        stdoutBytes: Buffer.byteLength(stdout, "utf8"),
+        stderrBytes: 0,
+      },
+    };
+  });
+  const tool = pkg.createCodexWebSearchToolDefinition({ runner, env });
+
+  assert.equal(tool.parameters.properties.mode.default, "cached");
+  assert.equal(tool.parameters.properties.timeoutMs.default, 5_000);
+  assert.equal(tool.parameters.properties.maxOutputChars.default, 900);
+
+  await tool.execute("call-config-1", { query: "uses configured defaults" }, undefined, undefined, { cwd: process.cwd() });
+  assert.equal(runner.calls[0].input.mode, "cached");
+  assert.equal(runner.calls[0].input.liveSearch, false);
+  assert.equal(runner.calls[0].input.timeoutMs, 5_000);
+  assert.equal(runner.calls[0].input.maxOutputChars, 900);
+  assert.equal(runner.calls[0].input.codex.sandbox, "read-only");
+
+  await tool.execute(
+    "call-config-2",
+    {
+      query: "uses tool-call overrides",
+      mode: "live",
+      timeoutMs: 6_000,
+      maxOutputChars: 1_000,
+    },
+    undefined,
+    undefined,
+    { cwd: process.cwd() },
+  );
+  assert.equal(runner.calls[1].input.mode, "live");
+  assert.equal(runner.calls[1].input.liveSearch, true);
+  assert.equal(runner.calls[1].input.timeoutMs, 6_000);
+  assert.equal(runner.calls[1].input.maxOutputChars, 1_000);
+});
+
+test("registered tool rejects invalid config before registration", () => {
+  assert.throws(
+    () => pkg.createCodexWebSearchToolDefinition({
+      runner: createFakeRunner(() => {
+        throw new Error("runner should not have been called");
+      }),
+      env: {
+        [pkg.CODEX_WEB_SEARCH_CONFIG_ENV_VARS.sandbox]: "workspace-write",
+      },
+    }),
+    (error) => {
+      assert.equal(error.name, "CodexWebSearchConfigError");
+      assert.match(error.message, /sandbox must be 'read-only'/);
+      assert.doesNotMatch(error.message, /auth\.json/);
+      return true;
+    },
+  );
+});
+
 test("registered tool rejects invalid input before calling the runner", async () => {
   const runner = createFakeRunner(() => {
     throw new Error("runner should not have been called");
   });
-  const tool = pkg.createCodexWebSearchToolDefinition({ runner });
+  const tool = pkg.createCodexWebSearchToolDefinition({ runner, env: {} });
 
   await assert.rejects(
     () => tool.execute("call-2", { query: "   ", maxOutputChars: 600 }, undefined, undefined, { cwd: process.cwd() }),
@@ -202,7 +306,7 @@ test("registered tool formats and throws sanitized runner failures", async () =>
       },
     });
   });
-  const tool = pkg.createCodexWebSearchToolDefinition({ runner });
+  const tool = pkg.createCodexWebSearchToolDefinition({ runner, env: {} });
 
   await assert.rejects(
     () => tool.execute("call-3", { query: "private query", maxOutputChars: 1_000 }, undefined, undefined, { cwd: process.cwd() }),
@@ -232,7 +336,7 @@ test("registered tool reports malformed fake Codex JSONL as a parse failure", as
       stderrBytes: 0,
     },
   }));
-  const tool = pkg.createCodexWebSearchToolDefinition({ runner });
+  const tool = pkg.createCodexWebSearchToolDefinition({ runner, env: {} });
 
   await assert.rejects(
     () => tool.execute("call-4", { query: "current docs" }, undefined, undefined, { cwd: process.cwd() }),

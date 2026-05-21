@@ -52,6 +52,24 @@ export interface CodexWebSearchToolInput {
   includeRawEvents?: boolean;
 }
 
+export interface CodexWebSearchInputDefaults {
+  mode?: CodexWebSearchMode;
+  timeoutMs?: number;
+  maxOutputChars?: number;
+  sandbox?: CodexSandboxMode;
+}
+
+export interface CodexWebSearchInputNormalizationOptions {
+  defaults?: CodexWebSearchInputDefaults;
+}
+
+interface ResolvedCodexWebSearchInputDefaults {
+  mode: CodexWebSearchMode;
+  timeoutMs: number;
+  maxOutputChars: number;
+  sandbox: CodexSandboxMode;
+}
+
 export interface NormalizedCodexExecutionOptions {
   sandbox: CodexSandboxMode;
   outputFormat: CodexOutputFormat;
@@ -166,8 +184,12 @@ export function isCodexWebSearchMode(value: unknown): value is CodexWebSearchMod
   return typeof value === "string" && CODEX_WEB_SEARCH_MODES.includes(value as CodexWebSearchMode);
 }
 
-export function validateCodexWebSearchInput(input: unknown): CodexWebSearchValidationResult {
+export function validateCodexWebSearchInput(
+  input: unknown,
+  options: CodexWebSearchInputNormalizationOptions = {},
+): CodexWebSearchValidationResult {
   const issues: CodexWebSearchValidationIssue[] = [];
+  const defaults = resolveInputDefaults(options.defaults);
 
   if (!isPlainObject(input)) {
     return {
@@ -193,10 +215,10 @@ export function validateCodexWebSearchInput(input: unknown): CodexWebSearchValid
   }
 
   const query = normalizeQuery(input.query, issues);
-  const mode = normalizeMode(input.mode, issues);
+  const mode = normalizeMode(input.mode, defaults.mode, issues);
   const timeoutMs = normalizeIntegerOption({
     value: input.timeoutMs,
-    defaultValue: CODEX_WEB_SEARCH_DEFAULTS.timeoutMs,
+    defaultValue: defaults.timeoutMs,
     path: "timeoutMs",
     code: "timeout_ms_invalid",
     min: CODEX_WEB_SEARCH_LIMITS.timeoutMsMin,
@@ -206,7 +228,7 @@ export function validateCodexWebSearchInput(input: unknown): CodexWebSearchValid
   });
   const maxOutputChars = normalizeIntegerOption({
     value: input.maxOutputChars,
-    defaultValue: CODEX_WEB_SEARCH_DEFAULTS.maxOutputChars,
+    defaultValue: defaults.maxOutputChars,
     path: "maxOutputChars",
     code: "max_output_chars_invalid",
     min: CODEX_WEB_SEARCH_LIMITS.maxOutputCharsMin,
@@ -238,7 +260,7 @@ export function validateCodexWebSearchInput(input: unknown): CodexWebSearchValid
       maxOutputChars,
       includeRawEvents,
       codex: {
-        sandbox: CODEX_WEB_SEARCH_DEFAULTS.sandbox,
+        sandbox: defaults.sandbox,
         outputFormat: CODEX_WEB_SEARCH_DEFAULTS.outputFormat,
         maxBufferBytes: CODEX_WEB_SEARCH_DEFAULTS.maxBufferBytes,
         skipGitRepoCheck: CODEX_WEB_SEARCH_DEFAULTS.skipGitRepoCheck,
@@ -247,8 +269,11 @@ export function validateCodexWebSearchInput(input: unknown): CodexWebSearchValid
   };
 }
 
-export function normalizeCodexWebSearchInput(input: unknown): NormalizedCodexWebSearchInput {
-  const result = validateCodexWebSearchInput(input);
+export function normalizeCodexWebSearchInput(
+  input: unknown,
+  options: CodexWebSearchInputNormalizationOptions = {},
+): NormalizedCodexWebSearchInput {
+  const result = validateCodexWebSearchInput(input, options);
   if (!result.ok) {
     throw new CodexWebSearchValidationError(result.issues);
   }
@@ -266,6 +291,44 @@ export function formatCodexWebSearchValidationIssues(
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function resolveInputDefaults(
+  defaults: CodexWebSearchInputDefaults | undefined,
+): ResolvedCodexWebSearchInputDefaults {
+  const mode = defaults?.mode ?? CODEX_WEB_SEARCH_DEFAULTS.mode;
+  const timeoutMs = defaults?.timeoutMs ?? CODEX_WEB_SEARCH_DEFAULTS.timeoutMs;
+  const maxOutputChars = defaults?.maxOutputChars ?? CODEX_WEB_SEARCH_DEFAULTS.maxOutputChars;
+  const sandbox = defaults?.sandbox ?? CODEX_WEB_SEARCH_DEFAULTS.sandbox;
+
+  if (!isCodexWebSearchMode(mode)) {
+    throw new TypeError("default mode must be either 'live' or 'cached'.");
+  }
+
+  assertDefaultIntegerInRange(
+    timeoutMs,
+    "timeoutMs",
+    CODEX_WEB_SEARCH_LIMITS.timeoutMsMin,
+    CODEX_WEB_SEARCH_LIMITS.timeoutMsMax,
+  );
+  assertDefaultIntegerInRange(
+    maxOutputChars,
+    "maxOutputChars",
+    CODEX_WEB_SEARCH_LIMITS.maxOutputCharsMin,
+    CODEX_WEB_SEARCH_LIMITS.maxOutputCharsMax,
+  );
+
+  if (sandbox !== CODEX_WEB_SEARCH_DEFAULTS.sandbox) {
+    throw new TypeError("default sandbox must be 'read-only'.");
+  }
+
+  return { mode, timeoutMs, maxOutputChars, sandbox };
+}
+
+function assertDefaultIntegerInRange(value: unknown, label: string, min: number, max: number): void {
+  if (typeof value !== "number" || !Number.isInteger(value) || value < min || value > max) {
+    throw new TypeError(`default ${label} must be an integer between ${min} and ${max}.`);
+  }
 }
 
 function normalizeQuery(value: unknown, issues: CodexWebSearchValidationIssue[]): string {
@@ -309,9 +372,13 @@ function normalizeQuery(value: unknown, issues: CodexWebSearchValidationIssue[])
   return query;
 }
 
-function normalizeMode(value: unknown, issues: CodexWebSearchValidationIssue[]): CodexWebSearchMode {
+function normalizeMode(
+  value: unknown,
+  defaultValue: CodexWebSearchMode,
+  issues: CodexWebSearchValidationIssue[],
+): CodexWebSearchMode {
   if (value === undefined) {
-    return CODEX_WEB_SEARCH_DEFAULTS.mode;
+    return defaultValue;
   }
 
   if (!isCodexWebSearchMode(value)) {
@@ -320,7 +387,7 @@ function normalizeMode(value: unknown, issues: CodexWebSearchValidationIssue[]):
       code: "mode_invalid",
       message: "mode must be either 'live' or 'cached'.",
     });
-    return CODEX_WEB_SEARCH_DEFAULTS.mode;
+    return defaultValue;
   }
 
   return value;
