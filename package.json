@@ -32,7 +32,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node --test test/*.test.mjs",
     "build": "npm run typecheck",
-    "pack:check": "npm pack --dry-run"
+    "pack:check": "node scripts/check-package-contents.mjs"
   },
   "devDependencies": {
     "@types/node": "^20.17.19",

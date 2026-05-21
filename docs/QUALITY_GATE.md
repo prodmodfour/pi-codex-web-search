@@ -23,7 +23,7 @@ The gate is intentionally safe for automated runs: it does not require Pi, a rea
    - `npm run typecheck --if-present`
    - `npm test --if-present`
    - `npm run build --if-present`
-   - `npm run pack:check` when that script exists
+   - `npm run pack:check` when that script exists; this runs `npm pack --dry-run --json` and verifies the packed file list against the expected Pi package allowlist
 5. **Post-check generated/private-file guardrail** — reruns the generated/private-file guardrail after cleanup.
 
 When the gate installs dependencies and `node_modules/` was not present at startup, it removes that generated directory before exiting. This keeps repeat runs deterministic and prevents accidental commits of installed dependencies.
@@ -43,6 +43,8 @@ npm test
 npm run build
 npm run pack:check
 ```
+
+`pack:check` is implemented by `scripts/check-package-contents.mjs`. It does not create a tarball; it validates the npm dry-run output and prints the files that would ship. Release-specific packaging notes are in [`RELEASE.md`](RELEASE.md).
 
 ## Limitations
 

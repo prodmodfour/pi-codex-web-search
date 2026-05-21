@@ -25,6 +25,7 @@ test/fake-codex-integration.test.mjs      # fake Codex executable integration co
 test/fixtures/fake-codex.mjs              # deterministic fake codex exec fixture
 docs/                                # install, design, security, usage, validation, and quality-gate notes
 scripts/quality-gate.sh              # local validation gate used by the build loop
+scripts/check-package-contents.mjs   # npm dry-run package contents validator
 ```
 
 The Pi manifest currently points to the TypeScript entrypoint:
@@ -102,7 +103,7 @@ scripts/quality-gate.sh
 npm run quality
 ```
 
-The gate runs shell syntax checks, secret and generated-file guardrails, npm validation scripts, and a package dry-run. See [`docs/QUALITY_GATE.md`](docs/QUALITY_GATE.md) for the full checklist.
+The gate runs shell syntax checks, secret and generated-file guardrails, npm validation scripts, and a package dry-run with package-contents validation. See [`docs/QUALITY_GATE.md`](docs/QUALITY_GATE.md) for the full checklist and [`docs/RELEASE.md`](docs/RELEASE.md) for release packaging steps.
 
 ## Current tool behavior
 

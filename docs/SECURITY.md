@@ -169,12 +169,13 @@ Implemented controls:
 * `scripts/check-no-generated-private-files.sh` blocks real env files, Codex auth artifacts, `node_modules/`, build output, coverage output, and npm package tarballs.
 * `scripts/check-no-secrets.sh` scans repository files for common token and private-key patterns.
 * The npm `files` allowlist ships only `extensions/`, `src/`, `docs/`, and `README.md`.
+* `npm run pack:check` runs an npm dry-run and fails if unexpected or forbidden private/generated paths would ship.
 
 Residual risks and recommendations:
 
 * Manual validation transcripts can still include private prompts, local paths, or provider diagnostics. Keep them private or sanitize them before sharing.
 * Do not enable `includeRawEvents` unless you need bounded debugging data and are comfortable exposing raw prompt/result content in Pi details.
-* Review `npm pack --dry-run` output before publishing.
+* Review `npm run pack:check` output before publishing; use raw `npm pack --dry-run` only as an additional manual preview.
 
 ### 6. Package-install and supply-chain risks
 

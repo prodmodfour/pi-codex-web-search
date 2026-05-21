@@ -29,3 +29,16 @@ test("npm scripts map to the quality gate", () => {
     assert.equal(typeof packageJson.scripts?.[scriptName], "string", `${scriptName} script should exist`);
   }
 });
+
+test("package files allowlist stays narrow", () => {
+  assert.deepEqual(packageJson.files, ["extensions", "src", "docs", "README.md"]);
+});
+
+test("pack check uses the package contents validator", () => {
+  assert.match(packageJson.scripts["pack:check"], /scripts\/check-package-contents\.mjs/);
+  assert.equal(existsSync(new URL("../scripts/check-package-contents.mjs", import.meta.url)), true);
+});
+
+test("release documentation exists", () => {
+  assert.equal(existsSync(new URL("../docs/RELEASE.md", import.meta.url)), true);
+});

@@ -100,7 +100,7 @@ pi install npm:pi-codex-web-search@0.0.0
 pi
 ```
 
-Replace `0.0.0` with the published version you intend to run. Run `npm run pack:check` from this repository before publishing or consuming a local package tarball.
+Replace `0.0.0` with the published version you intend to run. Run `npm run pack:check` from this repository before publishing or consuming a local package tarball, and follow the release checklist in [`RELEASE.md`](RELEASE.md).
 
 ## Verify the package loaded
 
@@ -137,7 +137,7 @@ Manifest paths are relative to the package root. Pi loads the TypeScript extensi
 
 Pi can also auto-discover conventional extension directories when a package has no explicit `pi` manifest. Conventional locations include top-level package `extensions/` directories and user/project extension directories such as `~/.pi/agent/extensions/` and `.pi/extensions/`. This package intentionally keeps the explicit manifest so reviewers can see the exact extension entrypoint that Pi will load.
 
-The npm `files` allowlist ships only the package resources needed by Pi users: `extensions/`, `src/`, `docs/`, and `README.md`. Test fixtures, local build artifacts, dependency directories, and private files are not intended to be included in the npm package.
+The npm `files` allowlist ships only the package resources needed by Pi users: `extensions/`, `src/`, `docs/`, and `README.md`. Test fixtures, local build artifacts, dependency directories, shell scripts, autonomous build notes, and private files are not intended to be included in the npm package. `npm run pack:check` verifies this allowlist with an npm dry-run before release.
 
 ## Caveats
 

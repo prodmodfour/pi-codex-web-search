@@ -379,7 +379,7 @@ Commit when complete.
 
 ## 016 — Add release and packaging validation
 
-Status: TODO
+Status: DONE
 
 Make it easy to verify what will ship.
 
