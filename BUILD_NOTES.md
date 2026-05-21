@@ -2,19 +2,44 @@
 
 ## Current state
 
-Customised autonomous build scaffold for a Pi extension that will call Codex CLI for web search.
+Ticket 000 is complete. The repository now has a TypeScript/npm Pi package skeleton for `pi-codex-web-search`.
 
-The repository is ready for Ticket 000.
+Added in this cycle:
+
+* `package.json` with Node 20+ metadata, npm scripts, dev dependencies, and `pi.extensions` pointing at `./extensions/codex-web-search.ts`
+* `package-lock.json`
+* `tsconfig.json` for strict NodeNext TypeScript type-checking without emitted build artifacts
+* `extensions/codex-web-search.ts` as a safe no-op placeholder extension entrypoint
+* `src/index.ts` with initial package metadata constants
+* `test/package-shape.test.mjs` smoke tests for package manifest shape
+* expanded `.gitignore` for Node, Pi runtime artifacts, Codex auth paths, and autonomous-agent logs
+* README updated to describe the current package shape and placeholder status
+
+The placeholder extension intentionally does not call Codex or register `codex_web_search`; later tickets own the API, runner, parser, formatter, and final tool registration.
 
 ## Quality gates
 
-Initial shell-only quality gate has not yet run in the target repository.
+Ran `scripts/quality-gate.sh` successfully.
 
-The gate is intentionally able to pass before `package.json` exists, then becomes stricter once the TypeScript package is bootstrapped.
+The gate performed:
+
+* shell syntax checks
+* secret guardrail
+* generated/private-file guardrail
+* `npm ci` (after the initial `npm install` generated `package-lock.json`)
+* `npm run lint --if-present`
+* `npm run typecheck --if-present`
+* `npm test --if-present`
+* `npm run build --if-present`
+* `npm run pack:check`
+
+After the gate, `node_modules/` was removed locally so the repository remains clean and the generated/private-file guardrail will not fail at the start of the next cycle.
 
 ## Latest cycle notes
 
-Scaffold generated from the autonomous-build-template operating model and customised for the Pi/Codex web-search extension.
+The npm package dry-run included only the intended package files from `files`: README, docs, extension source, package metadata, and `src` metadata.
+
+No real Codex invocation or authentication was used.
 
 ## Known blockers
 
@@ -28,4 +53,4 @@ Manual real-Codex validation will require a machine with:
 
 ## Next recommended ticket
 
-Ticket 000 — Bootstrap TypeScript Pi package skeleton.
+Ticket 001 — Add project-specific quality and guardrail scripts.

@@ -15,7 +15,7 @@ The build loop must select the lowest-numbered TODO or IN_PROGRESS ticket.
 
 ## 000 — Bootstrap TypeScript Pi package skeleton
 
-Status: TODO
+Status: DONE
 
 Create the initial TypeScript package structure for the Pi Codex web-search extension.
 

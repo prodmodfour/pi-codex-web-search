@@ -1,86 +1,62 @@
-# Pi Codex Web Search — Autonomous Build System
+# Pi Codex Web Search Extension
 
-This repository scaffold is a customised autonomous-build-system for building a Pi extension that gives Pi a `codex_web_search` tool.
+`pi-codex-web-search` is a TypeScript Pi package scaffold for a future `codex_web_search` tool. The package is intended to let Pi call the local Codex CLI for web-enabled answers while relying on the user's existing Codex/ChatGPT authentication.
 
-The extension goal is to let Pi call the local Codex CLI for web search, so web lookups can use your ChatGPT/Codex account rather than OpenAI API web-search billing.
+> Status: build in progress. The current package only exposes a safe, no-op placeholder extension entrypoint. It does **not** call Codex or register the final tool yet.
 
-## What this build system does
-
-It uses the ticket-driven loop from `prodmodfour/autonomous-build-template`:
-
-1. read the project control files
-2. select the lowest-numbered `TODO` or `IN_PROGRESS` ticket
-3. implement only that ticket
-4. run `scripts/quality-gate.sh`
-5. update tickets and notes
-6. commit the result
-7. leave the working tree clean
-
-The customised ticket runway starts with a blank extension package and walks the agent through research, TypeScript package setup, Codex runner safety, JSONL parsing, Pi tool registration, fake-Codex integration tests, docs, packaging, and final review.
-
-## Prerequisites
-
-Install locally:
-
-```bash
-npm install -g --ignore-scripts @earendil-works/pi-coding-agent
-npm install -g @openai/codex
-codex login
-```
-
-Then confirm both commands are available:
-
-```bash
-pi --help
-codex exec --skip-git-repo-check --sandbox read-only "Reply with OK."
-```
-
-`codex login` should authenticate with your ChatGPT/Codex account. Do **not** put `~/.codex/auth.json` in this repo, in tickets, or in logs.
-
-## Quick start
-
-```bash
-# from this extracted directory
-git init
-git add .
-git commit -m "chore: initialise autonomous build system"
-
-scripts/quality-gate.sh
-scripts/build-loop.sh --max-cycles 1 --allow-ahead
-```
-
-Run a larger runway when the first cycle looks sane:
-
-```bash
-scripts/build-loop.sh --max-cycles 30 --allow-ahead
-```
-
-Add `--push` only after you have a remote configured and are happy with the generated commits.
-
-## Intended final package
-
-The autonomous build should produce a Pi package roughly like this:
+## Current package shape
 
 ```text
-package.json                 pi package manifest
-extensions/codex-web-search.ts
-src/codex/CodexRunner.ts
-src/codex/CodexJsonlParser.ts
-src/pi/registerCodexWebSearchTool.ts
-test/...
-docs/INSTALL.md
-docs/SECURITY.md
-docs/USAGE.md
+package.json                         # npm metadata plus the pi.extensions manifest
+extensions/codex-web-search.ts       # placeholder Pi extension entrypoint
+src/index.ts                         # shared package metadata constants
+test/package-shape.test.mjs          # smoke tests for the package skeleton
+docs/                                # design, security, usage, and validation notes
+scripts/quality-gate.sh              # local validation gate used by the build loop
 ```
 
-The extension should register a Pi tool named `codex_web_search`. The tool should call `codex exec` via `execFile`, never via shell string interpolation, and should default to a read-only Codex sandbox.
+The Pi manifest currently points to the TypeScript entrypoint:
+
+```json
+{
+  "pi": {
+    "extensions": ["./extensions/codex-web-search.ts"]
+  }
+}
+```
+
+Pi loads TypeScript extensions through its extension runtime, so this scaffold ships TypeScript source rather than compiled JavaScript.
+
+## Development prerequisites
+
+Install Node.js 20+ and npm. Pi and Codex are only needed for later manual validation; automated checks for this scaffold do not require a real Codex login.
+
+```bash
+npm install
+npm run typecheck
+npm test
+npm run pack:check
+```
+
+Run the repository quality gate before committing changes:
+
+```bash
+scripts/quality-gate.sh
+```
+
+## Intended final behavior
+
+Later tickets will replace the placeholder with a Pi tool named `codex_web_search` that:
+
+* validates user input before invoking Codex
+* executes `codex exec` with argv arrays, never shell-interpolated strings
+* defaults to `codex exec --sandbox read-only`
+* uses Codex `--search` only when live web search is requested
+* bounds time, stdout, stderr, and returned Pi tool content
+* parses or formats Codex output into concise Pi tool results
 
 ## Safety notes
 
-This project intentionally avoids:
+This project must never read, copy, log, or commit Codex credentials such as `~/.codex/auth.json`. Authentication remains the Codex CLI's responsibility.
 
-* scraping ChatGPT Web
-* bypassing Codex usage limits
-* reading or storing Codex auth tokens
-* committing secrets, `.env` files, `auth.json`, logs, `node_modules`, build output, or coverage output
-* arbitrary command execution beyond the constrained Codex CLI invocation needed for the tool
+Automated tests must use mocks or fake executables. Real Codex validation belongs in `docs/MANUAL_VALIDATION.md` and requires a local user who has installed Codex and run `codex login`.

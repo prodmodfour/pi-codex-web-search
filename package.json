@@ -1,0 +1,37 @@
+{
+  "name": "pi-codex-web-search",
+  "version": "0.0.0",
+  "description": "Pi extension package scaffold for a Codex CLI-backed web search tool.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "codex",
+    "web-search"
+  ],
+  "files": [
+    "extensions",
+    "src",
+    "docs",
+    "README.md"
+  ],
+  "pi": {
+    "extensions": [
+      "./extensions/codex-web-search.ts"
+    ]
+  },
+  "scripts": {
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test test/*.test.mjs",
+    "build": "npm run typecheck",
+    "pack:check": "npm pack --dry-run"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.19",
+    "typescript": "^5.7.3"
+  }
+}

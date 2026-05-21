@@ -1,15 +1,30 @@
 # dependencies
 node_modules/
+.pnpm-store/
+
+# package manager logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
 # build/test output
 dist/
 build/
 coverage/
 .vitest/
+*.tsbuildinfo
 
 # autonomous-agent logs
 .agent/logs/
 .agent/build-loop.lock/
+
+# Pi local runtime/install artifacts
+.pi/sessions/
+.pi/npm/
+.pi/git/
+.pi/logs/
+.pi/cache/
 
 # local env and secrets
 .env
