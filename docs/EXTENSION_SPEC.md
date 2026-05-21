@@ -6,7 +6,8 @@ This document freezes the Pi extension/package contract that this package target
 It also freezes the Ticket 003 `codex_web_search` tool API, the Ticket 004 safe
 `codex exec` argv-builder contract, the Ticket 005 bounded subprocess-runner
 contract, the Ticket 006 JSONL-parser contract, the Ticket 007 tool-result
-formatter contract, and the Ticket 008 Pi registration boundary.
+formatter contract, the Ticket 008 Pi registration boundary, and the Ticket 009
+optional command/help boundary.
 
 ## Research basis
 
@@ -17,8 +18,10 @@ Reviewed against the locally installed Pi package, version `0.75.4`:
 * `examples/extensions/hello.ts`
 * `examples/extensions/dynamic-tools.ts`
 * `examples/extensions/tool-override.ts`
+* `examples/extensions/commands.ts`
+* `examples/extensions/summarize.ts`
 * `examples/extensions/with-deps/package.json`
-* exported declaration files for `ExtensionAPI` and `ToolDefinition`
+* exported declaration files for `ExtensionAPI`, `ToolDefinition`, and `RegisteredCommand`
 
 No Codex live-web research was used for this ticket; local Pi docs, examples,
 and declarations were sufficient.
@@ -104,6 +107,36 @@ Important details:
 * `onUpdate` may stream bounded progress later, but this package does not depend
   on streaming updates for correctness.
 
+## Frozen `registerCommand` contract
+
+Ticket 009 confirmed that Pi's extension API supports simple slash commands
+through `pi.registerCommand(name, options)`. The command name is registered
+without the leading slash and invoked by users with the slash prefix.
+
+The target command-definition shape is the subset used by Pi `0.75.4`:
+
+```ts
+pi.registerCommand("codex-web-search", {
+  description: "Show help for the codex_web_search tool.",
+  handler: async (args, ctx) => {
+    ctx.ui.notify("...help text...", "info");
+  },
+});
+```
+
+Frozen command assumptions:
+
+* extension commands are checked before normal input processing;
+* `handler(args, ctx)` receives the raw argument string after the command name;
+* command handlers return `void`/`Promise<void>` rather than Pi tool content;
+* `ctx.ui.notify(...)` is the straightforward help display path in interactive
+  and RPC modes;
+* command code should check the UI availability surface before notifying so it
+  remains safe in print/JSON-style contexts;
+* the `/codex-web-search` command is informational only and must not execute
+  Codex, read configuration, inspect credentials, or treat command arguments as
+  subprocess input.
+
 ## Package manifest contract
 
 This package uses the explicit Pi package manifest in `package.json`:
@@ -168,8 +201,9 @@ a test fixture in `test/fixtures/mock-pi-api.mjs`.
 These local types/fixtures are intentionally a narrow subset of Pi's real API:
 
 * `registerTool(...)`
-* `registerCommand(...)` for future optional help-surface tests
+* `registerCommand(...)` for the `/codex-web-search` help command
 * text tool results and structured `details`
+* a minimal `ctx.ui.notify(...)` shape for command-help tests
 * the current `execute(toolCallId, params, signal, onUpdate, ctx)` order
 
 They are not a replacement for Pi's official runtime. If a future ticket adds a
@@ -453,8 +487,9 @@ sanitized.
 
 ## Pi registration contract
 
-Ticket 008 implements `src/pi/registerCodexWebSearchTool.ts` and wires it from
-`extensions/codex-web-search.ts`.
+Ticket 008 implements `src/pi/registerCodexWebSearchTool.ts`; Ticket 009 adds
+`src/pi/registerCodexWebSearchHelpCommand.ts`. The extension entrypoint wires
+both from `extensions/codex-web-search.ts`.
 
 Registration exports and behavior:
 
@@ -477,6 +512,14 @@ Registration exports and behavior:
   message. The error exposes the formatted `toolResult` for tests but does not
   retain raw stderr or query text.
 * The Pi `AbortSignal` argument is passed through to `CodexRunner`.
+* `registerCodexWebSearchHelpCommand(pi)` registers one informational command
+  named `codex-web-search`, invoked as `/codex-web-search`.
+* `createCodexWebSearchHelpCommandDefinition()` exposes the command definition
+  for tests.
+* `showCodexWebSearchHelp(ctx)` displays bounded static help through
+  `ctx.ui.notify(...)` only when a UI notification surface is available.
+* The help command ignores arguments, does not execute Codex, does not read
+  configuration, and does not inspect Codex credential files.
 
 ## Safety requirements
 
@@ -488,4 +531,6 @@ Registration exports and behavior:
   user-facing error output;
 * Ticket 008 throws formatted, sanitized failures so Pi marks failed tool calls
   as errors without exposing raw stderr or local/private paths in the message;
+* Ticket 009's `/codex-web-search` command is static help only and never invokes
+  Codex or reads credentials;
 * automated tests must not invoke real Codex by default.

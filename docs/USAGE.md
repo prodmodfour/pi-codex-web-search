@@ -1,5 +1,9 @@
 # Usage
 
+## Extension help command
+
+When the package is loaded as a Pi extension, invoke `/codex-web-search` to show concise static help for the `codex_web_search` tool. The command explains the parameters, defaults, and read-only Codex invocation shape. It does not execute Codex or read credential files.
+
 ## Running the autonomous build
 
 Run one cycle first:

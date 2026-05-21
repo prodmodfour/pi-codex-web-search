@@ -29,7 +29,8 @@ test("extension entrypoint registers codex_web_search with useful metadata and s
   extensionModule.default(api);
 
   assert.equal(registeredTools.length, 1);
-  assert.equal(registeredCommands.size, 0);
+  assert.equal(registeredCommands.size, 1);
+  assert.equal(registeredCommands.has("codex-web-search"), true);
 
   const [tool] = registeredTools;
   assert.equal(tool.name, "codex_web_search");
@@ -47,6 +48,53 @@ test("extension entrypoint registers codex_web_search with useful metadata and s
   assert.deepEqual(tool.parameters.properties.mode.enum, ["live", "cached"]);
   assert.equal(tool.parameters.properties.timeoutMs.default, 120_000);
   assert.equal(tool.parameters.properties.maxOutputChars.maximum, 50_000);
+});
+
+test("extension help command shows bounded codex_web_search usage help", async () => {
+  const { api, registeredCommands } = createMockPiApi();
+  const notifications = [];
+
+  extensionModule.default(api);
+
+  const command = registeredCommands.get("codex-web-search");
+  assert.ok(command);
+  assert.match(command.description, /codex_web_search/);
+
+  await command.handler("ignored args", {
+    cwd: process.cwd(),
+    hasUI: true,
+    ui: {
+      notify(message, level) {
+        notifications.push({ message, level });
+      },
+    },
+  });
+
+  assert.equal(notifications.length, 1);
+  assert.equal(notifications[0].level, "info");
+  assert.match(notifications[0].message, /codex_web_search help/);
+  assert.match(notifications[0].message, /mode: "live"/);
+  assert.match(notifications[0].message, /--sandbox read-only/);
+  assert.match(notifications[0].message, /never reads Codex credential files/);
+  assert.equal(notifications[0].message.length < 2_000, true);
+});
+
+test("help command is informational and safe without an interactive UI", async () => {
+  let notified = false;
+  const command = pkg.createCodexWebSearchHelpCommandDefinition();
+
+  await command.handler("", {
+    cwd: process.cwd(),
+    hasUI: false,
+    ui: {
+      notify() {
+        notified = true;
+      },
+    },
+  });
+
+  assert.equal(notified, false);
+  assert.equal(pkg.showCodexWebSearchHelp({ cwd: process.cwd(), hasUI: false }), false);
 });
 
 test("registered tool normalizes parameters, runs fake Codex, parses JSONL, and formats output", async () => {

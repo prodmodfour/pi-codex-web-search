@@ -85,7 +85,7 @@ Ticket 007 adds formatting safeguards:
 Ticket 008 wires the formatter into Pi registration:
 
 * `extensions/codex-web-search.ts` registers only the narrow `codex_web_search`
-  tool; it does not add a generic command-execution surface
+  tool as an execution surface; it does not add a generic command-execution surface
 * `src/pi/registerCodexWebSearchTool.ts` normalizes Pi parameters again before
   creating any subprocess request
 * production execution defaults to `CodexRunner`; tests inject fake runners so
@@ -95,6 +95,12 @@ Ticket 008 wires the formatter into Pi registration:
   sanitized text before `CodexWebSearchToolExecutionError` is thrown, so Pi marks
   the tool call failed without exposing raw stderr or private paths in the error
   message
+
+Ticket 009 adds `/codex-web-search` as static command help only:
+
+* the command displays bounded usage text with `ctx.ui.notify(...)` when a UI is available
+* it ignores command arguments
+* it does not execute Codex, read configuration, inspect credential files, or touch user input beyond showing static help
 
 ## Web results
 

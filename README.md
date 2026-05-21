@@ -2,7 +2,7 @@
 
 `pi-codex-web-search` is a TypeScript Pi package for a `codex_web_search` tool. The package is intended to let Pi call the local Codex CLI for web-enabled answers while relying on the user's existing Codex/ChatGPT authentication.
 
-> Status: build in progress. The current package registers `codex_web_search`, validates its parameters, runs the bounded Codex subprocess pipeline, parses `codex exec --json` output, and formats concise Pi tool results. Configuration, fake-executable integration tests, and full manual real-Codex validation docs are still future tickets.
+> Status: build in progress. The current package registers `codex_web_search` plus a `/codex-web-search` help command, validates tool parameters, runs the bounded Codex subprocess pipeline, parses `codex exec --json` output, and formats concise Pi tool results. Configuration, fake-executable integration tests, and full manual real-Codex validation docs are still future tickets.
 
 ## Current package shape
 
@@ -14,9 +14,10 @@ src/tool/codexWebSearchApi.ts        # codex_web_search input/result types and v
 src/codex/buildCodexArgs.ts          # safe codex exec argv construction
 src/codex/CodexRunner.ts             # execFile-based Codex subprocess runner
 src/codex/CodexJsonlParser.ts        # parser for codex exec --json JSONL events
-src/output/formatToolResult.ts       # bounded Pi tool-result formatting
-src/pi/registerCodexWebSearchTool.ts # Pi tool registration and execution wiring
-test/package-shape.test.mjs          # smoke tests for the package skeleton
+src/output/formatToolResult.ts            # bounded Pi tool-result formatting
+src/pi/registerCodexWebSearchHelpCommand.ts # optional /codex-web-search help command
+src/pi/registerCodexWebSearchTool.ts      # Pi tool registration and execution wiring
+test/package-shape.test.mjs               # smoke tests for the package skeleton
 docs/                                # design, security, usage, validation, and quality-gate notes
 scripts/quality-gate.sh              # local validation gate used by the build loop
 ```
@@ -70,6 +71,10 @@ The extension registers a Pi tool named `codex_web_search` that:
 * formats parsed Codex output into concise Pi tool results with source URLs/snippets when available
 * bounds returned Pi tool text with a truncation notice
 * throws sanitized Pi tool failures for invalid input, missing Codex, timeout, non-zero exit, oversized output, cancellation, parser failures, or unknown errors
+
+## Help command
+
+When loaded in Pi, the extension also registers `/codex-web-search`. The command displays concise usage help for `codex_web_search`, including parameters, defaults, the read-only live-search invocation shape, and the reminder that the extension never reads Codex credential files. It is informational only and does not execute Codex.
 
 ## Safety notes
 

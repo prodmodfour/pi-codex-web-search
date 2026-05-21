@@ -33,6 +33,15 @@ export {
 } from "./output/formatToolResult.js";
 
 export {
+  CODEX_WEB_SEARCH_HELP_COMMAND_DESCRIPTION,
+  CODEX_WEB_SEARCH_HELP_COMMAND_NAME,
+  CODEX_WEB_SEARCH_HELP_TEXT,
+  createCodexWebSearchHelpCommandDefinition,
+  registerCodexWebSearchHelpCommand,
+  showCodexWebSearchHelp,
+} from "./pi/registerCodexWebSearchHelpCommand.js";
+
+export {
   CODEX_WEB_SEARCH_TOOL_DESCRIPTION,
   CODEX_WEB_SEARCH_TOOL_LABEL,
   CODEX_WEB_SEARCH_TOOL_PARAMETERS,
@@ -127,7 +136,9 @@ export type {
   PiExtensionCommandContext,
   PiExtensionContext,
   PiExtensionFactory,
+  PiExtensionUi,
   PiImageContent,
+  PiNotificationLevel,
   PiTextContent,
   PiToolContent,
   PiToolDefinition,

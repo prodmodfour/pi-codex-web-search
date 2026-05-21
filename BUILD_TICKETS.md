@@ -218,7 +218,7 @@ Commit when complete.
 
 ## 009 — Add optional Pi command/help surface
 
-Status: TODO
+Status: DONE
 
 Add a small command or documented help mechanism if Pi's extension API supports it cleanly.
 

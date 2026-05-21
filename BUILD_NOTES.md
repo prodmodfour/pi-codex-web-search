@@ -2,27 +2,25 @@
 
 ## Current state
 
-Tickets 000 through 008 are complete. The repository now has a TypeScript/npm Pi package skeleton, project-specific validation guardrails, a frozen Pi extension/package contract, the finalized `codex_web_search` tool API contract, a safe `codex exec` argv builder, a bounded Codex subprocess runner, a JSONL parser for `codex exec --json` stdout, a bounded formatter for Pi tool output, and Pi tool registration wiring.
+Tickets 000 through 009 are complete. The repository now has a TypeScript/npm Pi package skeleton, project-specific validation guardrails, a frozen Pi extension/package contract, the finalized `codex_web_search` tool API contract, a safe `codex exec` argv builder, a bounded Codex subprocess runner, a JSONL parser for `codex exec --json` stdout, a bounded formatter for Pi tool output, Pi tool registration wiring, and a small optional Pi slash-command help surface.
 
-Ticket 008 added in this cycle:
+Ticket 009 added in this cycle:
 
-* created `src/pi/registerCodexWebSearchTool.ts`
-* replaced the no-op extension entrypoint with `extensions/codex-web-search.ts` calling `registerCodexWebSearchTool(pi)`
-* registered the `codex_web_search` tool with useful label, description, prompt snippet, and prompt guidelines that name the tool explicitly
-* added `CODEX_WEB_SEARCH_TOOL_PARAMETERS`, a JSON-schema-compatible parameter schema matching the Ticket 003 API with defaults, bounds, and `additionalProperties: false`
-* added `createCodexWebSearchToolDefinition(...)` and `executeCodexWebSearchTool(...)` for testable registration/execution wiring
-* kept a narrow fake-runner seam through `CodexWebSearchToolRunner`; production defaults to `new CodexRunner()`
-* normalized Pi-provided parameters before execution, passed the Pi `AbortSignal` through to the runner, parsed successful JSONL via `parseCodexJsonlToolResult(...)`, and formatted success output via `formatCodexWebSearchToolResult(...)`
-* mapped validation, runner, parser, and unknown failures into normalized failures, formatted them, then threw `CodexWebSearchToolExecutionError` so Pi marks the tool call failed with a bounded sanitized message
-* exported registration constants, helpers, and types from `src/index.ts`
-* added `test/register-codex-web-search-tool.test.mjs` covering extension registration, schema/metadata, fake-runner success, invalid input, sanitized runner failure, and malformed JSONL failure
-* updated README, `docs/ARCHITECTURE.md`, `docs/EXTENSION_SPEC.md`, and `docs/SECURITY.md` for the now-registered tool boundary and safety posture
+* reviewed the local Pi `docs/extensions.md`, command examples, and exported declaration files for the current `registerCommand` contract
+* added `src/pi/registerCodexWebSearchHelpCommand.ts`
+* registered `/codex-web-search` from `extensions/codex-web-search.ts` alongside the existing `codex_web_search` tool
+* added static bounded help text covering the tool purpose, parameters, defaults, read-only live-search invocation shape, Codex login prerequisite, and credential-handling reminder
+* kept the command informational only: it ignores arguments, does not execute Codex, does not read configuration, and does not inspect Codex credentials
+* added a minimal `ctx.ui.notify(...)` shape to the local Pi contract for command tests
+* exported help-command constants/helpers from `src/index.ts`
+* updated tests to cover command registration, help notification output, and no-op behavior when no interactive UI is available
+* updated README, `docs/ARCHITECTURE.md`, `docs/EXTENSION_SPEC.md`, `docs/SECURITY.md`, and `docs/USAGE.md` for the new help surface
 
 No Codex live search, authenticated Codex run, or Codex task execution was used in this cycle.
 
 ## Quality gates
 
-Ran `scripts/quality-gate.sh` successfully after implementing Ticket 008.
+Ran `scripts/quality-gate.sh` successfully after implementing Ticket 009.
 
 The passing gate performed:
 
@@ -32,15 +30,13 @@ The passing gate performed:
 * `npm ci`
 * `npm run lint --if-present`
 * `npm run typecheck --if-present`
-* `npm test --if-present` with 42 passing tests
+* `npm test --if-present` with 44 passing tests
 * `npm run build --if-present`
 * `npm run pack:check`
 * cleanup of `node_modules/` created by the gate
 * generated/private-file guardrail after cleanup
 
-The npm package dry-run included the intended package files from `files`, including the new `src/pi/registerCodexWebSearchTool.ts`. `node_modules/` was removed by the gate before exit.
-
-Before the final full gate, an initial quality-gate attempt failed because an ad-hoc local `npm ci` had left `node_modules/` present, triggering the generated/private-file guardrail. I removed `node_modules/` and reran the full quality gate successfully.
+The npm package dry-run included the intended package files from `files`, including the new `src/pi/registerCodexWebSearchHelpCommand.ts`. `node_modules/` was removed by the gate before exit.
 
 ## Known blockers and limitations
 
@@ -48,7 +44,9 @@ None for automated quality validation.
 
 The local Pi contract in `src/pi/piExtensionContract.ts` is intentionally narrow and mirrors only the subset frozen in `docs/EXTENSION_SPEC.md`. It should be replaced or reconciled explicitly if a future ticket imports official Pi runtime types or TypeBox schemas directly.
 
-The extension now registers and can execute `codex_web_search`, but it does not yet provide optional slash-command help or user configuration. The current sandbox allowlist is intentionally limited to `read-only`; future configuration work must explicitly validate and document any override.
+The `/codex-web-search` command uses Pi's UI notification surface when available and no-ops in non-interactive contexts without `ctx.ui.notify(...)`. It is static help only and intentionally does not trigger a tool call or execute Codex.
+
+The extension now registers and can execute `codex_web_search`, but it does not yet provide user configuration. The current sandbox allowlist is intentionally limited to `read-only`; future configuration work must explicitly validate and document any override.
 
 `CODEX_WEB_SEARCH_TOOL_PARAMETERS` is a plain JSON-schema-compatible object rather than a runtime import from `typebox` or `@earendil-works/pi-ai`. Local Pi validation supports this shape, and avoiding the import keeps automated tests independent of a local Pi install.
 
@@ -64,4 +62,4 @@ The extension now registers and can execute `codex_web_search`, but it does not 
 
 ## Next recommended ticket
 
-Ticket 009 — Add optional Pi command/help surface.
+Ticket 010 — Add configuration handling.

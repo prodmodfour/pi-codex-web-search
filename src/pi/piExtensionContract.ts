@@ -23,12 +23,19 @@ export interface PiToolResult<TDetails = unknown> {
   terminate?: boolean;
 }
 
+export type PiNotificationLevel = "info" | "warning" | "error";
+
+export interface PiExtensionUi {
+  notify(message: string, level?: PiNotificationLevel): void;
+}
+
 export type PiToolUpdateCallback<TDetails = unknown> = (partialResult: PiToolResult<TDetails>) => void;
 
 export interface PiExtensionContext {
   cwd: string;
   hasUI?: boolean;
   signal?: AbortSignal;
+  ui?: PiExtensionUi;
 }
 
 export interface PiExtensionCommandContext extends PiExtensionContext {

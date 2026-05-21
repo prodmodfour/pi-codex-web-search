@@ -18,8 +18,9 @@ Pi extension entrypoint
 extensions/codex-web-search.ts
 src/pi/piExtensionContract.ts          # current local contract/test subset
 src/tool/codexWebSearchApi.ts          # tool input/result types and validation
-src/codex/buildCodexArgs.ts            # safe codex exec argv construction
-src/pi/registerCodexWebSearchTool.ts   # Pi registration and execution wiring
+src/codex/buildCodexArgs.ts                 # safe codex exec argv construction
+src/pi/registerCodexWebSearchHelpCommand.ts # optional /codex-web-search help command
+src/pi/registerCodexWebSearchTool.ts        # Pi tool registration and execution wiring
 src/codex/CodexRunner.ts
 src/codex/CodexJsonlParser.ts
 src/output/formatToolResult.ts
@@ -111,7 +112,16 @@ The formatter intentionally does not execute Codex or register the Pi tool;
 * formats successful results with `formatCodexWebSearchToolResult(...)`;
 * formats failures and then throws `CodexWebSearchToolExecutionError` so Pi marks the tool call as failed while the thrown message remains sanitized and bounded.
 
-The extension entrypoint in `extensions/codex-web-search.ts` only calls this registration helper.
+The extension entrypoint in `extensions/codex-web-search.ts` calls this registration helper and the separate optional help-command registration helper.
+
+## Implemented help-command boundary
+
+`src/pi/registerCodexWebSearchHelpCommand.ts` owns the `/codex-web-search` slash-command help surface. It:
+
+* registers a command named `codex-web-search` through Pi's `registerCommand` API;
+* displays concise `codex_web_search` usage help through `ctx.ui.notify(...)` when a UI is available;
+* no-ops in non-interactive contexts where no UI notification surface is available;
+* does not execute Codex, inspect configuration, read credentials, or process command arguments.
 
 ## Test strategy
 
