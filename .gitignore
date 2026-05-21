@@ -1,0 +1,27 @@
+# dependencies
+node_modules/
+
+# build/test output
+dist/
+build/
+coverage/
+.vitest/
+
+# autonomous-agent logs
+.agent/logs/
+.agent/build-loop.lock/
+
+# local env and secrets
+.env
+.env.*
+!.env.example
+.codex/
+auth.json
+*.pem
+*.key
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
