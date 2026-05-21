@@ -118,6 +118,12 @@ Ticket 009 adds `/codex-web-search` as static command help only:
 * it ignores command arguments
 * it does not execute Codex, read configuration, inspect credential files, or touch user input beyond showing static help
 
+Ticket 011 adds fake-Codex integration coverage for automated validation:
+
+* tests point the configured Codex binary at `test/fixtures/fake-codex.mjs` instead of the real `codex` binary
+* the fixture emits deterministic public JSONL and failure cases; it does not read Codex credentials or call the network
+* timeout, non-zero exit, malformed JSONL, and missing-final-message paths are exercised without a real Codex login
+
 ## Web results
 
 Treat web-search results as untrusted. Codex may read web content, and web content can contain prompt injection. The extension should ask Codex for concise answers and sources, but users should still verify high-stakes outputs.

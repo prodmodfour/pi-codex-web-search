@@ -2,7 +2,7 @@
 
 `pi-codex-web-search` is a TypeScript Pi package for a `codex_web_search` tool. The package is intended to let Pi call the local Codex CLI for web-enabled answers while relying on the user's existing Codex/ChatGPT authentication.
 
-> Status: build in progress. The current package registers `codex_web_search` plus a `/codex-web-search` help command, validates tool parameters and safe configuration, runs the bounded Codex subprocess pipeline, parses `codex exec --json` output, and formats concise Pi tool results. Fake-executable integration tests and full manual real-Codex validation docs are still future tickets.
+> Status: build in progress. The current package registers `codex_web_search` plus a `/codex-web-search` help command, validates tool parameters and safe configuration, runs the bounded Codex subprocess pipeline, parses `codex exec --json` output, formats concise Pi tool results, and covers the path with a fake-Codex executable integration harness. Full manual real-Codex validation docs are still a future ticket.
 
 ## Current package shape
 
@@ -19,6 +19,8 @@ src/output/formatToolResult.ts            # bounded Pi tool-result formatting
 src/pi/registerCodexWebSearchHelpCommand.ts # optional /codex-web-search help command
 src/pi/registerCodexWebSearchTool.ts      # Pi tool registration and execution wiring
 test/package-shape.test.mjs               # smoke tests for the package skeleton
+test/fake-codex-integration.test.mjs      # fake Codex executable integration coverage
+test/fixtures/fake-codex.mjs              # deterministic fake codex exec fixture
 docs/                                # design, security, usage, validation, and quality-gate notes
 scripts/quality-gate.sh              # local validation gate used by the build loop
 ```
@@ -37,7 +39,7 @@ Pi loads TypeScript extensions through its extension runtime, so this scaffold s
 
 ## Development prerequisites
 
-Install Node.js 20+ and npm. Pi and Codex are only needed for later manual validation; automated checks for this scaffold do not require a real Codex login.
+Install Node.js 20+ and npm. Pi and Codex are only needed for later manual validation; automated checks use mocks and a fake Codex executable fixture and do not require a real Codex login.
 
 ```bash
 npm install
@@ -109,4 +111,4 @@ The current argv builder returns arguments for `CodexRunner`, which calls the co
 
 `formatCodexWebSearchToolResult` converts normalized success/failure results into Pi text content plus structured details. The formatter includes source URLs/snippets when available, enforces `maxOutputChars`, adds a truncation notice, and omits raw stderr/query text from user-facing error output.
 
-Automated tests must use mocks or fake executables. Real Codex validation belongs in `docs/MANUAL_VALIDATION.md` and requires a local user who has installed Codex and run `codex login`.
+Automated tests use mocks or the deterministic fake executable under `test/fixtures/fake-codex.mjs`. Real Codex validation belongs in `docs/MANUAL_VALIDATION.md` and requires a local user who has installed Codex and run `codex login`.

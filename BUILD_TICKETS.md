@@ -261,7 +261,7 @@ Commit when complete.
 
 ## 011 — Add fake-Codex integration test harness
 
-Status: TODO
+Status: DONE
 
 Test the full extension path without a real Codex login.
 

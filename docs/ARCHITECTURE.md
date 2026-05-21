@@ -139,7 +139,7 @@ The extension entrypoint in `extensions/codex-web-search.ts` calls this registra
 
 Automated tests must use mocks or fake executables. Real Codex auth is a manual validation step.
 
-Expected automated coverage:
+Current automated coverage includes:
 
 * input validation and normalization
 * configuration defaults, overrides, invalid values, and precedence
@@ -148,4 +148,4 @@ Expected automated coverage:
 * JSONL parsing
 * output formatting
 * Pi extension registration with a mock Pi object and fake runner
-* fake-Codex integration path
+* a deterministic fake-Codex executable integration path that exercises the registered tool, `CodexRunner`, JSONL parsing, formatting, timeout handling, non-zero exits, malformed JSONL, and missing-final-message failures without calling real Codex

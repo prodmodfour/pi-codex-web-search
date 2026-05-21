@@ -2,31 +2,23 @@
 
 ## Current state
 
-Tickets 000 through 010 are complete. The repository now has a TypeScript/npm Pi package skeleton, project-specific validation guardrails, a frozen Pi extension/package contract, the finalized `codex_web_search` tool API contract, a safe `codex exec` argv builder, a bounded Codex subprocess runner, a JSONL parser for `codex exec --json` stdout, a bounded formatter for Pi tool output, Pi tool registration wiring, a small optional Pi slash-command help surface, and safe configuration handling.
+Tickets 000 through 011 are complete. The repository now has a TypeScript/npm Pi package skeleton, project-specific validation guardrails, a frozen Pi extension/package contract, the finalized `codex_web_search` tool API contract, a safe `codex exec` argv builder, a bounded Codex subprocess runner, a JSONL parser for `codex exec --json` stdout, a bounded formatter for Pi tool output, Pi tool registration wiring, a small optional Pi slash-command help surface, safe configuration handling, and a fake-Codex integration test harness.
 
-Ticket 010 added in this cycle:
+Ticket 011 added in this cycle:
 
-* added `src/config/codexWebSearchConfig.ts` for documented environment/project configuration loading and validation
-* supported safe settings for Codex binary path, default mode, default timeout, default formatted output length, and sandbox
-* documented environment variables:
-  * `PI_CODEX_WEB_SEARCH_CODEX_BINARY`
-  * `PI_CODEX_WEB_SEARCH_DEFAULT_MODE`
-  * `PI_CODEX_WEB_SEARCH_TIMEOUT_MS`
-  * `PI_CODEX_WEB_SEARCH_MAX_OUTPUT_CHARS`
-  * `PI_CODEX_WEB_SEARCH_SANDBOX`
-* implemented precedence as explicit project/in-process config over environment values over built-in defaults, with tool-call `mode`, `timeoutMs`, and `maxOutputChars` overriding configured defaults for that call
-* kept the sandbox allowlist at `read-only` only; write-capable Codex sandboxes remain rejected
-* wired validated configuration into Pi tool registration, schema defaults, input normalization, and the production `CodexRunner` binary path
-* updated the help text to clarify that built-in defaults can be changed by documented environment variables without making the command read configuration
-* exported config types/helpers from `src/index.ts`
-* added unit coverage for config defaults, environment overrides, explicit project overrides, invalid values, no credential-path reads, configured tool defaults, tool-call precedence, and invalid config registration failures
-* updated README, architecture, extension spec, usage, security, and troubleshooting docs with the new settings and safety posture
+* added `test/fixtures/fake-codex.mjs`, an executable fake Codex CLI fixture that accepts the reviewed `codex exec --json [--search] --skip-git-repo-check --sandbox read-only -- <prompt>` argv shape
+* made the fixture emit representative successful JSONL with a web-search event, final agent message, and public example source URLs
+* added fixture-selected failure modes for timeout, non-zero exit, malformed JSONL, and missing final agent message
+* added `test/fake-codex-integration.test.mjs` to run the registered `codex_web_search` tool through the production `CodexRunner` using the fake binary path, without injecting a fake runner
+* asserted final Pi tool output and structured details for the successful fake-Codex path
+* asserted sanitized Pi tool failures for timeout, non-zero exit, malformed JSONL, and missing-final-message cases
+* updated README, architecture, extension spec, quality-gate, and security docs to describe the fake-executable integration coverage
 
-No Codex live search, authenticated Codex run, Codex task execution, Codex credential access, or browser automation was used in this cycle.
+No Codex live search, authenticated Codex run, real Codex CLI execution, Codex credential access, network access, or browser automation was used in this cycle. Automated tests configure the runner to call the checked-in fake executable fixture rather than the real `codex` binary.
 
 ## Quality gates
 
-Ran `scripts/quality-gate.sh` successfully after implementing Ticket 010.
+Ran `scripts/quality-gate.sh` successfully after implementing Ticket 011.
 
 The passing gate performed:
 
@@ -36,17 +28,19 @@ The passing gate performed:
 * `npm ci`
 * `npm run lint --if-present`
 * `npm run typecheck --if-present`
-* `npm test --if-present` with 51 passing tests
+* `npm test --if-present` with 56 passing tests, including the fake-Codex executable integration tests
 * `npm run build --if-present`
 * `npm run pack:check`
 * cleanup of `node_modules/` created by the gate
 * generated/private-file guardrail after cleanup
 
-The npm package dry-run included the intended package files from `files`, including the new `src/config/codexWebSearchConfig.ts`. `node_modules/` was removed by the gate before exit.
+The npm package dry-run included only the intended package files from the package `files` allowlist. Test fixtures are not shipped in the npm package. `node_modules/` was removed by the gate before exit.
 
 ## Known blockers and limitations
 
 None for automated quality validation.
+
+The fake-Codex fixture is intentionally a deterministic test executable, not a Codex emulator. It validates the expected safe argv shape and covers representative success/failure cases, but real Codex JSONL schemas and authentication behavior still require later manual validation.
 
 The local Pi contract in `src/pi/piExtensionContract.ts` is intentionally narrow and mirrors only the subset frozen in `docs/EXTENSION_SPEC.md`. It should be replaced or reconciled explicitly if a future ticket imports official Pi runtime types or TypeBox schemas directly.
 
@@ -62,7 +56,7 @@ The `/codex-web-search` command uses Pi's UI notification surface when available
 
 `formatCodexWebSearchToolResult` and `CodexWebSearchToolExecutionError` intentionally omit raw stderr, query text, argv, and local/private paths from thrown tool-error messages. Safe diagnostic metadata remains available in formatted details.
 
-`CodexRunner` can execute a real Codex binary through the registered tool, but automated tests only use mocked executors, JSONL fixtures, and fake runners. Manual real-Codex validation will require a machine with:
+`CodexRunner` can execute a real Codex binary through the registered tool, but automated tests only use mocked executors, JSONL fixtures, fake runners, and the checked-in fake Codex executable. Manual real-Codex validation will require a machine with:
 
 * Pi installed
 * Codex CLI installed
@@ -70,4 +64,4 @@ The `/codex-web-search` command uses Pi's UI notification surface when available
 
 ## Next recommended ticket
 
-Ticket 011 — Add fake-Codex integration test harness.
+Ticket 012 — Add manual real-Codex validation guide.

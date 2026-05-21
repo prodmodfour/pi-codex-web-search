@@ -7,7 +7,8 @@ It also freezes the Ticket 003 `codex_web_search` tool API, the Ticket 004 safe
 `codex exec` argv-builder contract, the Ticket 005 bounded subprocess-runner
 contract, the Ticket 006 JSONL-parser contract, the Ticket 007 tool-result
 formatter contract, the Ticket 008 Pi registration boundary, the Ticket 009
-optional command/help boundary, and the Ticket 010 configuration boundary.
+optional command/help boundary, the Ticket 010 configuration boundary, and the
+Ticket 011 fake-Codex integration-test boundary.
 
 ## Research basis
 
@@ -549,6 +550,21 @@ Registration exports and behavior:
 * The help command ignores arguments, does not execute Codex, does not read
   configuration, and does not inspect Codex credential files.
 
+## Fake-Codex integration-test contract
+
+Ticket 011 adds `test/fixtures/fake-codex.mjs`, a deterministic executable test
+fixture for automated integration coverage. Tests configure `codexBinary` to the
+fixture's absolute path and then run the registered `codex_web_search` tool
+through the production `CodexRunner`; they do not rely on a real `codex` binary,
+Codex authentication, or network access.
+
+The fixture accepts the reviewed `codex exec --json [--search] --skip-git-repo-check
+--sandbox read-only -- <prompt>` argv shape and emits representative JSONL for a
+successful final agent message with sources. It also exposes prompt-selected
+failure fixtures for timeout, non-zero exit, malformed JSONL, and missing final
+agent message cases. The fixture uses only public example URLs and static test
+data.
+
 ## Safety requirements
 
 * no shell command construction from query input;
@@ -562,4 +578,6 @@ Registration exports and behavior:
   as errors without exposing raw stderr or local/private paths in the message;
 * Ticket 009's `/codex-web-search` command is static help only and never invokes
   Codex or reads credentials;
+* Ticket 011's fake-Codex integration tests configure the runner to call only
+  the checked-in fixture, not the real Codex binary;
 * automated tests must not invoke real Codex by default.

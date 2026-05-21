@@ -8,7 +8,7 @@ scripts/quality-gate.sh
 npm run quality
 ```
 
-The gate is intentionally safe for automated runs: it does not require Pi, a real Codex CLI, Codex authentication, or network access beyond normal npm dependency installation.
+The gate is intentionally safe for automated runs: it does not require Pi, a real Codex CLI, Codex authentication, or network access beyond normal npm dependency installation. Integration coverage uses the checked-in fake Codex executable fixture under `test/fixtures/` rather than the real `codex` binary.
 
 ## Checks
 
