@@ -1,6 +1,5 @@
 # Pi Codex Web Search Extension
 
-[![quality](https://github.com/prodmodfour/pi-codex-web-search/actions/workflows/quality.yml/badge.svg)](https://github.com/prodmodfour/pi-codex-web-search/actions/workflows/quality.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.md)
 [![Node.js >=20](https://img.shields.io/badge/node-%3E%3D20-339933?logo=node.js&logoColor=white)](package.json)
 [![Pi extension](https://img.shields.io/badge/Pi-extension-6f42c1)](docs/INSTALLATION.md)
@@ -9,13 +8,14 @@
 
 When Codex is authenticated with a ChatGPT/Codex account, live searches made through this extension may consume that account's Codex/ChatGPT plan limits. They do not use OpenAI API web-search billing by default, and this package cannot bypass Codex, ChatGPT, account, or network limits.
 
-> Status: package implementation complete. Automated quality gates pass without real Codex authentication; real Codex/Pi validation remains an opt-in human checklist in [`docs/MANUAL_VALIDATION.md`](docs/MANUAL_VALIDATION.md). The package registers `codex_web_search` plus a `/codex-web-search` help command, validates tool parameters and safe configuration, runs the bounded Codex subprocess pipeline, parses `codex exec --json` output, formats concise Pi tool results, and covers the path with a fake-Codex executable integration harness.
+> Status: package implementation complete. Real Codex/Pi validation remains an opt-in human checklist in [`docs/MANUAL_VALIDATION.md`](docs/MANUAL_VALIDATION.md). The package registers `codex_web_search` plus a `/codex-web-search` help command, validates tool parameters and safe configuration, runs the bounded Codex subprocess pipeline, parses `codex exec --json` output, and formats concise Pi tool results.
 
-## Current package shape
+## Repository map
 
 ```text
 package.json # npm metadata plus the pi.extensions manifest
-extensions/codex-web-search.ts # Pi extension entrypoint that registers codex_web_search
+package-lock.json # locked development dependencies for reproducible checks
+extensions/codex-web-search.ts # Pi extension entrypoint that registers the tool and help command
 src/index.ts # shared package metadata and exported API/argv/registration contracts
 src/tool/codexWebSearchApi.ts # codex_web_search input/result types and validation
 src/config/codexWebSearchConfig.ts # documented env/project config loading and validation
@@ -23,16 +23,28 @@ src/codex/buildCodexArgs.ts # safe codex exec argv construction
 src/codex/CodexRunner.ts # execFile-based Codex subprocess runner
 src/codex/CodexJsonlParser.ts # parser for codex exec --json JSONL events
 src/output/formatToolResult.ts # bounded Pi tool-result formatting
+src/pi/piExtensionContract.ts # local Pi API contract subset used for typing and tests
 src/pi/registerCodexWebSearchHelpCommand.ts # optional /codex-web-search help command
 src/pi/registerCodexWebSearchTool.ts # Pi tool registration and execution wiring
-test/package-shape.test.mjs # package/script shape and documentation guard tests
-test/fake-codex-integration.test.mjs # fake Codex executable integration coverage
+test/*.test.mjs # unit, contract, package-shape, and fake-Codex integration coverage
 test/fixtures/fake-codex.mjs # deterministic fake codex exec fixture
-docs/ # install, example fixture, design, security, usage, validation, and quality-gate notes
-scripts/quality-gate.sh # local validation gate
+docs/ # install, example fixture, design, security, usage, validation, and release notes
 scripts/check-package-contents.mjs # npm dry-run package contents validator
 scripts/smoke-real-codex-search.mjs # opt-in authenticated real-Codex smoke test
+CONTRIBUTING.md # setup, PR, and security contribution guidance
+LICENSE.md # MIT license text
+README.md # package overview and quick-start documentation
 ```
+
+## Documentation map
+
+* [`docs/INSTALLATION.md`](docs/INSTALLATION.md) — local path, git, npm-style, manifest, and package-loading notes.
+* [`docs/USAGE.md`](docs/USAGE.md) — prompt examples, help command behavior, configuration, and development checks.
+* [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — module boundaries, subprocess pipeline, formatter, and test strategy.
+* [`docs/SECURITY.md`](docs/SECURITY.md) — threat model, credential handling, sandbox assumptions, and residual risks.
+* [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) — common setup, loading, Codex, parser, and packaging issues.
+* [`docs/MANUAL_VALIDATION.md`](docs/MANUAL_VALIDATION.md) — opt-in real Codex/Pi validation checklist.
+* [`docs/RELEASE.md`](docs/RELEASE.md) — release packaging steps.
 
 The Pi manifest currently points to the TypeScript entrypoint:
 
@@ -60,7 +72,7 @@ Local checkout, one-session load:
 ```bash
 git clone <repo-url> pi-codex-web-search
 cd pi-codex-web-search
-npm install
+npm ci
 npm test
 pi -e .
 ```
@@ -92,24 +104,14 @@ After loading, run `/codex-web-search` in Pi to confirm the help command is regi
 
 ## Development prerequisites
 
-Install Node.js 20+ and npm. Pi and Codex are only needed for later manual validation; automated checks use mocks and a fake Codex executable fixture and do not require a real Codex login.
+Install Node.js 20+ and npm. Pi and Codex are only needed for later manual validation with a real local search.
 
 ```bash
-npm install
+npm ci
 npm run typecheck
 npm test
 npm run pack:check
 ```
-
-Run the repository quality gate before committing changes:
-
-```bash
-scripts/quality-gate.sh
-# or
-npm run quality
-```
-
-The gate runs shell syntax checks, secret and generated-file guardrails, npm validation scripts, and a package dry-run with package-contents validation. It does **not** run the authenticated Codex smoke script.
 
 After installing and authenticating Codex, a human can opt in to a real web-search smoke test from a repository checkout:
 
@@ -117,9 +119,7 @@ After installing and authenticating Codex, a human can opt in to a real web-sear
 npm run smoke:codex
 ```
 
-That script runs a harmless read-only `codex exec --search` query, writes no log files, omits raw stderr from failures, and may consume Codex/ChatGPT plan limits. See [`docs/MANUAL_VALIDATION.md`](docs/MANUAL_VALIDATION.md) before running it. See [`docs/QUALITY_GATE.md`](docs/QUALITY_GATE.md) for the full automated checklist and [`docs/RELEASE.md`](docs/RELEASE.md) for release packaging steps.
-
-GitHub Actions runs the same quality gate on pushes, pull requests, and manual workflow dispatches through `.github/workflows/quality.yml`. CI is intentionally limited to fake-Codex/mocked automated coverage and does not install Pi, authenticate Codex, perform live web search, or publish the package; use [`docs/MANUAL_VALIDATION.md`](docs/MANUAL_VALIDATION.md) for real local Codex/Pi validation.
+That script runs a harmless read-only `codex exec --search` query, writes no log files, omits raw stderr from failures, and may consume Codex/ChatGPT plan limits. See [`docs/MANUAL_VALIDATION.md`](docs/MANUAL_VALIDATION.md) before running it. See [`docs/RELEASE.md`](docs/RELEASE.md) for release packaging steps.
 
 ## Current tool behavior
 
@@ -137,6 +137,16 @@ The extension registers a Pi tool named `codex_web_search` that:
 * formats parsed Codex output into concise Pi tool results with source URLs/snippets when available
 * bounds returned Pi tool text with a truncation notice
 * throws sanitized Pi tool failures for invalid input, missing Codex, timeout, non-zero exit, oversized output, cancellation, parser failures, or unknown errors
+
+### Tool parameters
+
+| Parameter | Type and default | Notes |
+| --- | --- | --- |
+| `query` | required string | Search question or research task. Trimmed, must be non-empty, and capped at 4,000 characters. |
+| `mode` | `"live"` by default | `"live"` adds Codex `--search`; `"cached"` omits live search but still invokes the local Codex CLI. |
+| `timeoutMs` | `120000` | Integer subprocess timeout from 1,000 to 300,000 milliseconds. |
+| `maxOutputChars` | `12000` | Integer cap for model-facing result text from 500 to 50,000 characters. |
+| `includeRawEvents` | `false` | Adds bounded raw parsed Codex JSONL events to structured details for debugging; leave off for normal use. |
 
 ## Prompt examples
 
@@ -177,7 +187,7 @@ When loaded in Pi, the extension also registers `/codex-web-search`. The command
 ## Caveats
 
 * Real web search depends on the installed Codex CLI, local `codex login` state, network access, and account-level search availability.
-* Codex CLI arguments and JSONL event shapes can change; automated tests use representative fake-Codex fixtures, while real behavior needs manual validation.
+* Codex CLI arguments and JSONL event shapes can change; tests use representative fake-Codex fixtures, while real behavior needs manual validation.
 * The package currently targets local single-user Pi usage, not remote or multi-user execution.
 * The only supported Codex sandbox is `read-only`; write-capable Codex execution is intentionally unsupported.
 * The extension does not scrape ChatGPT Web, automate browsers, bypass usage limits, or provide a generic command-execution tool.
@@ -202,7 +212,7 @@ The current argv builder returns arguments for `CodexRunner`, which calls the co
 
 `formatCodexWebSearchToolResult` converts normalized success/failure results into Pi text content plus structured details. The formatter includes source URLs/snippets when available, enforces `maxOutputChars`, adds a truncation notice, and omits raw stderr/query text from user-facing error output.
 
-Automated tests use mocks or the deterministic fake executable under `test/fixtures/fake-codex.mjs`. Runtime troubleshooting is documented in [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md). Real Codex validation is documented in [`docs/MANUAL_VALIDATION.md`](docs/MANUAL_VALIDATION.md) and requires a local user who has installed Codex and run `codex login`.
+Tests use mocks or the deterministic fake executable under `test/fixtures/fake-codex.mjs`. Runtime troubleshooting is documented in [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md). Real Codex validation is documented in [`docs/MANUAL_VALIDATION.md`](docs/MANUAL_VALIDATION.md) and requires a local user who has installed Codex and run `codex login`.
 
 ## Contributing and license
 
