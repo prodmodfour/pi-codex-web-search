@@ -9,24 +9,24 @@ When Codex is authenticated with a ChatGPT/Codex account, live searches made thr
 ## Current package shape
 
 ```text
-package.json                         # npm metadata plus the pi.extensions manifest
-extensions/codex-web-search.ts       # Pi extension entrypoint that registers codex_web_search
-src/index.ts                         # shared package metadata and exported API/argv/registration contracts
-src/tool/codexWebSearchApi.ts        # codex_web_search input/result types and validation
-src/config/codexWebSearchConfig.ts   # documented env/project config loading and validation
-src/codex/buildCodexArgs.ts          # safe codex exec argv construction
-src/codex/CodexRunner.ts             # execFile-based Codex subprocess runner
-src/codex/CodexJsonlParser.ts        # parser for codex exec --json JSONL events
-src/output/formatToolResult.ts            # bounded Pi tool-result formatting
+package.json # npm metadata plus the pi.extensions manifest
+extensions/codex-web-search.ts # Pi extension entrypoint that registers codex_web_search
+src/index.ts # shared package metadata and exported API/argv/registration contracts
+src/tool/codexWebSearchApi.ts # codex_web_search input/result types and validation
+src/config/codexWebSearchConfig.ts # documented env/project config loading and validation
+src/codex/buildCodexArgs.ts # safe codex exec argv construction
+src/codex/CodexRunner.ts # execFile-based Codex subprocess runner
+src/codex/CodexJsonlParser.ts # parser for codex exec --json JSONL events
+src/output/formatToolResult.ts # bounded Pi tool-result formatting
 src/pi/registerCodexWebSearchHelpCommand.ts # optional /codex-web-search help command
-src/pi/registerCodexWebSearchTool.ts      # Pi tool registration and execution wiring
-test/package-shape.test.mjs               # smoke tests for the package skeleton
-test/fake-codex-integration.test.mjs      # fake Codex executable integration coverage
-test/fixtures/fake-codex.mjs              # deterministic fake codex exec fixture
-docs/                                # install, example fixture, design, security, usage, validation, and quality-gate notes
-scripts/quality-gate.sh              # local validation gate used by the build loop
-scripts/check-package-contents.mjs   # npm dry-run package contents validator
-scripts/smoke-real-codex-search.mjs  # opt-in authenticated real-Codex smoke test
+src/pi/registerCodexWebSearchTool.ts # Pi tool registration and execution wiring
+test/package-shape.test.mjs # package/script shape and documentation guard tests
+test/fake-codex-integration.test.mjs # fake Codex executable integration coverage
+test/fixtures/fake-codex.mjs # deterministic fake codex exec fixture
+docs/ # install, example fixture, design, security, usage, validation, and quality-gate notes
+scripts/quality-gate.sh # local validation gate used by the build loop
+scripts/check-package-contents.mjs # npm dry-run package contents validator
+scripts/smoke-real-codex-search.mjs # opt-in authenticated real-Codex smoke test
 ```
 
 The Pi manifest currently points to the TypeScript entrypoint:
@@ -157,7 +157,7 @@ The package entrypoint reads only these documented environment variables. Explic
 
 | Setting | Environment variable | Default | Validation |
 | --- | --- | --- | --- |
-| Codex binary | `PI_CODEX_WEB_SEARCH_CODEX_BINARY` | `codex` | non-empty string without null bytes |
+| Codex binary | `PI_CODEX_WEB_SEARCH_CODEX_BINARY` | `codex` | non-empty string after trimming, without null bytes |
 | Default mode | `PI_CODEX_WEB_SEARCH_DEFAULT_MODE` | `live` | `live` or `cached` |
 | Default timeout | `PI_CODEX_WEB_SEARCH_TIMEOUT_MS` | `120000` | integer from `1000` to `300000` |
 | Default max output | `PI_CODEX_WEB_SEARCH_MAX_OUTPUT_CHARS` | `12000` | integer from `500` to `50000` |

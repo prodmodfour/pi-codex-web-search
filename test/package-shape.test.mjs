@@ -55,6 +55,8 @@ test("real Codex smoke script is opt-in and documented", async () => {
 
   const script = await readFile(realCodexSmokeScriptUrl, "utf8");
   assert.match(script, /spawn\(/);
+  assert.match(script, /rawValue\.trim\(\)/);
+  assert.match(script, /empty after trimming/);
   assert.match(script, /shell:\s*false/);
   assert.match(script, /"--search"/);
   assert.match(script, /"--sandbox"/);

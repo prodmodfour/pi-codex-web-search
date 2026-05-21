@@ -18,7 +18,7 @@ The gate is intentionally safe for automated runs: it does not require Pi, a rea
 bash scripts/quality-gate.sh
 ```
 
-Because the local gate owns the check list, CI runs the shell syntax checks, secret and generated/private-file guardrails, npm validation scripts, tests, build/type checks, and `npm run pack:check` package dry-run validation without duplicating the logic in workflow YAML.
+Because the local gate owns the check list, CI runs the shell syntax checks, secret and generated/private-file guardrails, npm validation scripts, strict TypeScript checks, tests, build checks, and `npm run pack:check` package dry-run validation without duplicating the logic in workflow YAML.
 
 CI intentionally does not install Pi, install or authenticate the real Codex CLI, run `codex login`, run `npm run smoke:codex`, perform live web search, publish to npm, or exercise account-specific behaviour. Real Codex/Pi validation remains an opt-in human activity documented in [`MANUAL_VALIDATION.md`](MANUAL_VALIDATION.md).
 
@@ -31,8 +31,8 @@ CI intentionally does not install Pi, install or authenticate the real Codex CLI
 3. **Generated/private-file guardrail** — `scripts/check-no-generated-private-files.sh` fails when local or tracked private/generated paths are present, including real env files, Codex auth artifacts, `node_modules`, build output, coverage output, and npm package tarballs.
 4. **Node package checks** when `package.json` exists:
    - `npm ci` when `package-lock.json` exists, otherwise `npm install`
-   - `npm run lint --if-present`
-   - `npm run typecheck --if-present`
+   - `npm run lint --if-present` (currently `tsc --noEmit` with strict and unused-code checks)
+   - `npm run typecheck --if-present` (same TypeScript project check)
    - `npm test --if-present`
    - `npm run build --if-present`
    - `npm run pack:check` when that script exists; this runs `npm pack --dry-run --json` and verifies the packed file list against the expected Pi package allowlist

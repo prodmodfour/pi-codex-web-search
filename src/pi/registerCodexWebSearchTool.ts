@@ -49,6 +49,7 @@ import {
 } from "../tool/codexWebSearchApi.js";
 import type {
   CodexWebSearchFailureCode,
+  CodexWebSearchInputDefaults,
   CodexWebSearchMode,
   CodexWebSearchNormalizedFailure,
   CodexWebSearchToolInput,
@@ -67,7 +68,7 @@ export const CODEX_WEB_SEARCH_TOOL_PROMPT_GUIDELINES = [
 ] as const;
 
 /**
- * JSON-schema-compatible parameter schema matching the Ticket 003 API.
+ * JSON-schema-compatible parameter schema matching the public tool API.
  *
  * Pi accepts TypeBox schemas, and its validator also handles plain JSON schema
  * objects. Keeping this as data avoids adding a runtime dependency while still
@@ -200,7 +201,7 @@ export async function executeCodexWebSearchTool(
   const config = options.config ?? loadCodexWebSearchConfig();
 
   try {
-    normalized = normalizeCodexWebSearchInput(params, { defaults: toInputDefaults(config) });
+    normalized = normalizeCodexWebSearchInput(params, { defaults: createInputDefaultsFromConfig(config) });
   } catch (error) {
     throw createToolExecutionError(
       createFailureFromError(error, undefined),
@@ -233,7 +234,7 @@ function createConfigLoadOptions(
   return loadOptions;
 }
 
-function toInputDefaults(config: CodexWebSearchConfig) {
+function createInputDefaultsFromConfig(config: CodexWebSearchConfig): CodexWebSearchInputDefaults {
   return {
     mode: config.defaultMode,
     timeoutMs: config.timeoutMs,

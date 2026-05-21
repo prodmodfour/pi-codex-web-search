@@ -273,7 +273,7 @@ function normalizeCodexBinary(value: string | undefined): string {
 
   const binary = value.trim();
   if (binary.length === 0) {
-    throw new TypeError("codexBinary must be a non-empty string.");
+    throw new TypeError("codexBinary must be a non-empty string after trimming.");
   }
 
   if (binary.includes("\0")) {

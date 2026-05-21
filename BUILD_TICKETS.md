@@ -465,7 +465,7 @@ Commit when complete.
 
 ## 020 — Add polish pass for developer ergonomics
 
-Status: TODO
+Status: DONE
 
 Improve maintainability without changing core behaviour.
 

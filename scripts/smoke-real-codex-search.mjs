@@ -28,10 +28,11 @@ function fail(message, hints = []) {
 }
 
 function getCodexBinary() {
-  const value = process.env.PI_CODEX_WEB_SEARCH_CODEX_BINARY ?? DEFAULT_CODEX_BINARY;
+  const rawValue = process.env.PI_CODEX_WEB_SEARCH_CODEX_BINARY ?? DEFAULT_CODEX_BINARY;
+  const value = rawValue.trim();
 
   if (value.length === 0) {
-    fail("PI_CODEX_WEB_SEARCH_CODEX_BINARY is empty.", [
+    fail("PI_CODEX_WEB_SEARCH_CODEX_BINARY is empty after trimming.", [
       "Unset PI_CODEX_WEB_SEARCH_CODEX_BINARY or point it at a trusted Codex executable.",
     ]);
   }

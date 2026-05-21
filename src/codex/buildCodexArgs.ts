@@ -12,9 +12,9 @@ export const CODEX_EXEC_SUBCOMMAND = "exec" as const;
 export const CODEX_EXEC_PROMPT_SEPARATOR = "--" as const;
 
 /**
- * Ticket 004 permits only the documented safe sandbox currently used by this
- * extension. Future configuration work must deliberately expand this allowlist
- * before write-capable Codex sandboxes can be emitted.
+ * The current safe contract permits only the documented read-only sandbox.
+ * Future configuration work must deliberately expand this allowlist before
+ * write-capable Codex sandboxes can be emitted.
  */
 export const SAFE_CODEX_SANDBOXES = ["read-only"] as const;
 export type SafeCodexSandboxMode = (typeof SAFE_CODEX_SANDBOXES)[number];

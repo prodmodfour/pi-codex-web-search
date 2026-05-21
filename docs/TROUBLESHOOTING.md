@@ -127,7 +127,7 @@ Checks and fixes:
 
    | Environment variable | Accepted values |
    | --- | --- |
-   | `PI_CODEX_WEB_SEARCH_CODEX_BINARY` | Non-empty string without null bytes. |
+   | `PI_CODEX_WEB_SEARCH_CODEX_BINARY` | Non-empty string after trimming, without null bytes. |
    | `PI_CODEX_WEB_SEARCH_DEFAULT_MODE` | `live` or `cached`. |
    | `PI_CODEX_WEB_SEARCH_TIMEOUT_MS` | Integer from `1000` to `300000`. |
    | `PI_CODEX_WEB_SEARCH_MAX_OUTPUT_CHARS` | Integer from `500` to `50000`. |

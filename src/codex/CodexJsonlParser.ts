@@ -10,7 +10,6 @@
 import type {
   CodexWebSearchDiagnostics,
   CodexWebSearchFailureCode,
-  CodexWebSearchMode,
   CodexWebSearchNormalizedSuccess,
   CodexWebSearchRawEvent,
   CodexWebSearchSource,
@@ -209,7 +208,7 @@ export function parseCodexJsonlToolResult(
   const result: CodexWebSearchNormalizedSuccess = {
     ok: true,
     query: input.query,
-    mode: input.mode as CodexWebSearchMode,
+    mode: input.mode,
     liveSearch: input.liveSearch,
     answer: parsed.answer,
     sources: parsed.sources,

@@ -16,12 +16,12 @@ Pi extension entrypoint
 
 ```text
 extensions/codex-web-search.ts
-src/pi/piExtensionContract.ts          # current local contract/test subset
-src/tool/codexWebSearchApi.ts          # tool input/result types and validation
-src/config/codexWebSearchConfig.ts    # safe environment/project config loading
-src/codex/buildCodexArgs.ts                 # safe codex exec argv construction
+src/pi/piExtensionContract.ts # current local contract/test subset
+src/tool/codexWebSearchApi.ts # tool input/result types and validation
+src/config/codexWebSearchConfig.ts # safe environment/project config loading
+src/codex/buildCodexArgs.ts # safe codex exec argv construction
 src/pi/registerCodexWebSearchHelpCommand.ts # optional /codex-web-search help command
-src/pi/registerCodexWebSearchTool.ts        # Pi tool registration and execution wiring
+src/pi/registerCodexWebSearchTool.ts # Pi tool registration and execution wiring
 src/codex/CodexRunner.ts
 src/codex/CodexJsonlParser.ts
 src/output/formatToolResult.ts
@@ -100,7 +100,7 @@ Codex web-search results into Pi tool results. It:
   source URLs or snippets are available;
 * enforces `maxOutputChars` using the same bounds as the public tool API and
   appends a truncation notice when content is shortened;
-* handles empty successful answers with a clear placeholder message;
+* handles empty successful answers with a clear fallback message;
 * maps structured failure codes to actionable, code-specific messages;
 * omits raw stderr, query text, argv, and local paths from model-facing error
   text while retaining safe diagnostic metadata such as byte counts, exit code,
@@ -116,7 +116,7 @@ The formatter intentionally does not execute Codex or register the Pi tool;
 
 * registers `codex_web_search` with label, description, prompt snippet, and prompt guidelines that name the tool explicitly;
 * resolves and validates configuration before building the tool definition;
-* exposes a JSON-schema-compatible parameter schema matching the Ticket 003 API and rejecting unknown properties, with schema defaults updated from validated configuration;
+* exposes a JSON-schema-compatible parameter schema matching the public tool API and rejecting unknown properties, with schema defaults updated from validated configuration;
 * normalizes Pi-provided parameters again before execution so the internal pipeline does not rely solely on provider/tool-call validation;
 * uses a test-injectable runner seam, defaulting to the execFile-based `CodexRunner` with the validated Codex binary path;
 * passes Pi's `AbortSignal` through to the runner;

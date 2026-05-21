@@ -288,7 +288,7 @@ function normalizeCodexBinaryConfig(
       source,
       path,
       "codex_binary_invalid",
-      "codexBinary must be a non-empty string without null bytes.",
+      "codexBinary must be a non-empty string after trimming and without null bytes.",
     );
     return undefined;
   }
