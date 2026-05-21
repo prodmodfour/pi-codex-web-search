@@ -1,5 +1,10 @@
 # Pi Codex Web Search Extension
 
+[![quality](https://github.com/prodmodfour/pi-codex-web-search/actions/workflows/quality.yml/badge.svg)](https://github.com/prodmodfour/pi-codex-web-search/actions/workflows/quality.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.md)
+[![Node.js >=20](https://img.shields.io/badge/node-%3E%3D20-339933?logo=node.js&logoColor=white)](package.json)
+[![Pi extension](https://img.shields.io/badge/Pi-extension-6f42c1)](docs/INSTALLATION.md)
+
 `pi-codex-web-search` is a TypeScript Pi package for a `codex_web_search` tool. The package is intended to let Pi call the local Codex CLI for web-enabled answers while relying on the user's existing Codex/ChatGPT authentication.
 
 When Codex is authenticated with a ChatGPT/Codex account, live searches made through this extension may consume that account's Codex/ChatGPT plan limits. They do not use OpenAI API web-search billing by default, and this package cannot bypass Codex, ChatGPT, account, or network limits.
