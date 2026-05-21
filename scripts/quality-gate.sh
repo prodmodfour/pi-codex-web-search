@@ -82,7 +82,7 @@ if [[ -f package.json ]]; then
     warn "npm not installed; skipping Node checks"
   fi
 else
-  pp_info "No package.json yet; skipping Node checks until Ticket 000 creates the package."
+  pp_info "No package.json found; skipping Node checks."
 fi
 
 pp_section "Post-check generated/private-file guardrail"

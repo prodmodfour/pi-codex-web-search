@@ -106,7 +106,7 @@ Residual risks and recommendations:
 
 * Read-only is not the same as no-read. Codex may still have read access allowed by its own sandbox policy. Avoid launching Pi from highly sensitive directories when using live web search.
 * Do not ask the tool to combine private local files with public web search unless you are comfortable sharing that context with Codex.
-* Keep write-capable sandbox support out of this package unless a future ticket documents the need, the threat model update, and new tests.
+* Keep write-capable sandbox support out of this package unless a future change documents the need, the threat model update, and new tests.
 
 ### 3. Prompt injection from web results
 
@@ -237,7 +237,7 @@ Before changing code that touches execution, configuration, parsing, formatting,
 
 * keep subprocess execution on non-shell APIs with argv arrays;
 * keep query text after an end-of-options separator;
-* keep the sandbox allowlist at `read-only` unless a future ticket expands the threat model and tests;
+* keep the sandbox allowlist at `read-only` unless a future change expands the threat model and tests;
 * do not add credential-reading code or credential configuration variables;
 * keep output and raw-event details bounded;
 * keep automated tests fake-Codex/mocked by default;

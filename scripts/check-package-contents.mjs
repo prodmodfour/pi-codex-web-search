@@ -47,10 +47,7 @@ const FORBIDDEN_PACKAGE_PATHS = [
   { pattern: /(^|\/)\.env($|\.)/, reason: "environment files must not be packed" },
   { pattern: /(^|\/)[^/]+\.tgz$/, reason: "package tarballs must not be repacked" },
   { pattern: /^test\//, reason: "test fixtures are not runtime package contents" },
-  { pattern: /^scripts\//, reason: "release/automation scripts are not runtime package contents" },
-  { pattern: /^BUILD_/, reason: "autonomous build notes are not runtime package contents" },
-  { pattern: /^AGENTS\.md$/, reason: "agent instructions are not runtime package contents" },
-  { pattern: /^PROJECT_BRIEF\.md$/, reason: "project brief is not runtime package contents" },
+  { pattern: /^scripts\//, reason: "repository scripts are not runtime package contents" },
 ];
 
 function fail(message) {

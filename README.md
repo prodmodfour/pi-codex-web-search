@@ -4,7 +4,7 @@
 
 When Codex is authenticated with a ChatGPT/Codex account, live searches made through this extension may consume that account's Codex/ChatGPT plan limits. They do not use OpenAI API web-search billing by default, and this package cannot bypass Codex, ChatGPT, account, or network limits.
 
-> Status: autonomous build complete. Automated quality gates pass without real Codex authentication; real Codex/Pi validation remains an opt-in human checklist in [`docs/MANUAL_VALIDATION.md`](docs/MANUAL_VALIDATION.md). The package registers `codex_web_search` plus a `/codex-web-search` help command, validates tool parameters and safe configuration, runs the bounded Codex subprocess pipeline, parses `codex exec --json` output, formats concise Pi tool results, and covers the path with a fake-Codex executable integration harness.
+> Status: package implementation complete. Automated quality gates pass without real Codex authentication; real Codex/Pi validation remains an opt-in human checklist in [`docs/MANUAL_VALIDATION.md`](docs/MANUAL_VALIDATION.md). The package registers `codex_web_search` plus a `/codex-web-search` help command, validates tool parameters and safe configuration, runs the bounded Codex subprocess pipeline, parses `codex exec --json` output, formats concise Pi tool results, and covers the path with a fake-Codex executable integration harness.
 
 ## Current package shape
 
@@ -24,7 +24,7 @@ test/package-shape.test.mjs # package/script shape and documentation guard tests
 test/fake-codex-integration.test.mjs # fake Codex executable integration coverage
 test/fixtures/fake-codex.mjs # deterministic fake codex exec fixture
 docs/ # install, example fixture, design, security, usage, validation, and quality-gate notes
-scripts/quality-gate.sh # local validation gate used by the build loop
+scripts/quality-gate.sh # local validation gate
 scripts/check-package-contents.mjs # npm dry-run package contents validator
 scripts/smoke-real-codex-search.mjs # opt-in authenticated real-Codex smoke test
 ```
@@ -39,7 +39,7 @@ The Pi manifest currently points to the TypeScript entrypoint:
 }
 ```
 
-Pi loads TypeScript extensions through its extension runtime, so this scaffold ships TypeScript source rather than compiled JavaScript. The frozen Pi extension/package assumptions for this build are documented in [`docs/EXTENSION_SPEC.md`](docs/EXTENSION_SPEC.md).
+Pi loads TypeScript extensions through its extension runtime, so this package ships TypeScript source rather than compiled JavaScript. The frozen Pi extension/package assumptions are documented in [`docs/EXTENSION_SPEC.md`](docs/EXTENSION_SPEC.md).
 
 ## Install and load in Pi
 

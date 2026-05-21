@@ -1,6 +1,6 @@
 # Quality Gate
 
-Run the local gate before every ticket commit:
+Run the local gate before committing changes:
 
 ```bash
 scripts/quality-gate.sh

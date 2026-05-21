@@ -3,12 +3,11 @@
 ## Scope
 
 This document freezes the Pi extension/package contract that this package targets.
-It also freezes the Ticket 003 `codex_web_search` tool API, the Ticket 004 safe
-`codex exec` argv-builder contract, the Ticket 005 bounded subprocess-runner
-contract, the Ticket 006 JSONL-parser contract, the Ticket 007 tool-result
-formatter contract, the Ticket 008 Pi registration boundary, the Ticket 009
-optional command/help boundary, the Ticket 010 configuration boundary, and the
-Ticket 011 fake-Codex integration-test boundary.
+It also records the `codex_web_search` tool API, safe `codex exec`
+argv-builder contract, bounded subprocess-runner contract, JSONL-parser
+contract, tool-result formatter contract, Pi registration boundary, optional
+command/help boundary, configuration boundary, and fake-Codex integration-test
+boundary.
 
 ## Research basis
 
@@ -24,7 +23,7 @@ Reviewed against the locally installed Pi package, version `0.75.4`:
 * `examples/extensions/with-deps/package.json`
 * exported declaration files for `ExtensionAPI`, `ToolDefinition`, and `RegisteredCommand`
 
-No Codex live-web research was used for this ticket; local Pi docs, examples,
+No Codex live-web research was used for this spec; local Pi docs, examples,
 and declarations were sufficient.
 
 ## Frozen extension entrypoint contract
@@ -103,16 +102,16 @@ Important details:
   `details` even when it is empty.
 * Throw from `execute` to signal a failed tool call. Returning an error-looking
   object does not mark the tool call as failed.
-* `signal` must be honored by long-running work. Later runner tickets will pass
-  it through to subprocess handling where practical.
+* `signal` must be honored by long-running work. The runner passes it through
+  to subprocess handling where practical.
 * `onUpdate` may stream bounded progress later, but this package does not depend
   on streaming updates for correctness.
 
 ## Frozen `registerCommand` contract
 
-Ticket 009 confirmed that Pi's extension API supports simple slash commands
-through `pi.registerCommand(name, options)`. The command name is registered
-without the leading slash and invoked by users with the slash prefix.
+Pi's extension API supports simple slash commands through
+`pi.registerCommand(name, options)`. The command name is registered without the
+leading slash and invoked by users with the slash prefix.
 
 The target command-definition shape is the subset used by Pi `0.75.4`:
 
@@ -163,7 +162,7 @@ Frozen assumptions:
 * Pi-bundled packages such as `@earendil-works/pi-coding-agent`,
   `@earendil-works/pi-ai`, `@earendil-works/pi-tui`, and `typebox` should be
   listed as `peerDependencies` with a `"*"` range if this package imports them
-  at runtime in a future ticket.
+  at runtime in a future change.
 
 ## Install and load paths
 
@@ -213,7 +212,7 @@ These local types/fixtures are intentionally a narrow subset of Pi's real API:
 * a minimal `ctx.ui.notify(...)` shape for command-help tests
 * the current `execute(toolCallId, params, signal, onUpdate, ctx)` order
 
-They are not a replacement for Pi's official runtime. If a future ticket adds a
+They are not a replacement for Pi's official runtime. If a future change adds a
 runtime import from Pi or TypeBox, the package metadata and tests must be updated
 explicitly.
 
@@ -227,8 +226,9 @@ than calling the OpenAI API web-search endpoint.
 
 ## Finalized `codex_web_search` tool API
 
-Ticket 003 defines the TypeScript contract and validation functions in
-`src/tool/codexWebSearchApi.ts`. The Pi registration exposes these parameters and rejects unknown properties.
+`src/tool/codexWebSearchApi.ts` defines the TypeScript contract and validation
+functions. The Pi registration exposes these parameters and rejects unknown
+properties.
 
 ```ts
 interface CodexWebSearchToolInput {
@@ -257,8 +257,8 @@ The implementation must still emit `--search` only when normalized mode is
 
 ### Execution defaults frozen by the API
 
-These defaults are included in `NormalizedCodexWebSearchInput` for later argv
-builder and runner tickets:
+These defaults are included in `NormalizedCodexWebSearchInput` for the argv
+builder and runner:
 
 ```text
 sandbox: read-only
@@ -271,9 +271,9 @@ maxOutputChars: 12000 unless configured or overridden by tool call
 includeRawEvents: false
 ```
 
-The sandbox is intentionally not exposed as a tool-call parameter. Ticket 010
-adds validated configuration for it, but the only accepted value remains
-`read-only`; write-capable Codex sandboxes are not supported by this package.
+The sandbox is intentionally not exposed as a tool-call parameter. Configuration
+validates it, and the only accepted value remains `read-only`; write-capable
+Codex sandboxes are not supported by this package.
 
 ### Normalized result shape
 
@@ -327,7 +327,7 @@ query value.
 
 ## Configuration contract
 
-Ticket 010 implements `src/config/codexWebSearchConfig.ts`.
+`src/config/codexWebSearchConfig.ts` implements configuration handling.
 
 Supported settings:
 
@@ -353,7 +353,7 @@ The configuration code does not read Codex credentials, `~/.codex/auth.json`,
 
 ## Safe Codex argv-builder contract
 
-Ticket 004 implements `src/codex/buildCodexArgs.ts`. It exports
+`src/codex/buildCodexArgs.ts` implements safe argv construction. It exports
 `buildCodexExecArgs(input)`, which accepts a `NormalizedCodexWebSearchInput` and
 returns the arguments for the Codex executable. The returned array excludes the
 binary name so `CodexRunner` can use a non-shell API such as:
@@ -391,7 +391,7 @@ array element, never a shell-interpolated command string.
 
 ## Codex subprocess-runner contract
 
-Ticket 005 implements `src/codex/CodexRunner.ts`.
+`src/codex/CodexRunner.ts` implements bounded subprocess execution.
 
 Runner defaults and seams:
 
@@ -443,7 +443,7 @@ parse-failure wrapping.
 
 ## Codex JSONL-parser contract
 
-Ticket 006 implements `src/codex/CodexJsonlParser.ts` for `codex exec --json`
+`src/codex/CodexJsonlParser.ts` implements parsing for `codex exec --json`
 stdout.
 
 Primary exports:
@@ -456,9 +456,8 @@ Primary exports:
     annotations, sources, results, or action URLs;
   * optional `rawEvents` only when `includeRawEvents` is requested;
   * optional `diagnostics`, including stderr kept separately from answer text.
-* `parseCodexJsonlToolResult(raw, input)` wraps the parsed output in the Ticket
-  003 `CodexWebSearchNormalizedSuccess` shape for later formatter/registration
-  code.
+* `parseCodexJsonlToolResult(raw, input)` wraps the parsed output in the
+  `CodexWebSearchNormalizedSuccess` shape for formatter/registration code.
 * `CodexJsonlParserError` uses stable codes:
   * `codex_parse_error` for malformed JSONL or JSONL records that are not
     objects;
@@ -483,8 +482,8 @@ for the formatter boundary.
 
 ## Tool-result formatter contract
 
-Ticket 007 implements `src/output/formatToolResult.ts` for converting the
-normalized success/failure union into Pi tool output.
+`src/output/formatToolResult.ts` converts the normalized success/failure union
+into Pi tool output.
 
 Primary exports:
 
@@ -501,8 +500,8 @@ Formatter behavior:
 * empty successful answers become `Codex completed but returned an empty answer.`;
 * source URLs, titles, and snippets are included under a `Sources:` section when
   available, with at most 10 sources in model-facing text;
-* `maxOutputChars` defaults to `12000` and must remain within the Ticket 003
-  public bounds of 500-50000 characters;
+* `maxOutputChars` defaults to `12000` and must remain within the public tool
+  API bounds of 500-50000 characters;
 * over-limit text is shortened and ends with `[Output truncated to N characters.]`;
 * failures are mapped by stable failure code to concise summaries and suggested
   actions;
@@ -520,9 +519,9 @@ sanitized.
 
 ## Pi registration contract
 
-Ticket 008 implements `src/pi/registerCodexWebSearchTool.ts`; Ticket 009 adds
-`src/pi/registerCodexWebSearchHelpCommand.ts`. The extension entrypoint wires
-both from `extensions/codex-web-search.ts`.
+`src/pi/registerCodexWebSearchTool.ts` implements tool registration, and
+`src/pi/registerCodexWebSearchHelpCommand.ts` adds the help command. The
+extension entrypoint wires both from `extensions/codex-web-search.ts`.
 
 Registration exports and behavior:
 
@@ -531,7 +530,7 @@ Registration exports and behavior:
 * `createCodexWebSearchToolDefinition(options)` exposes the tool definition for
   unit tests and future composition.
 * `CODEX_WEB_SEARCH_TOOL_PARAMETERS` is a JSON-schema-compatible object with the
-  Ticket 003 properties, built-in defaults, bounds, and `additionalProperties: false`.
+  public tool API properties, built-in defaults, bounds, and `additionalProperties: false`.
   This mirrors the TypeBox-serializable shape Pi expects without adding a
   runtime dependency.
 * `createCodexWebSearchToolParameters(config)` builds the same schema with
@@ -558,8 +557,8 @@ Registration exports and behavior:
 
 ## Fake-Codex integration-test contract
 
-Ticket 011 adds `test/fixtures/fake-codex.mjs`, a deterministic executable test
-fixture for automated integration coverage. Tests configure `codexBinary` to the
+`test/fixtures/fake-codex.mjs` is a deterministic executable test fixture for
+automated integration coverage. Tests configure `codexBinary` to the
 fixture's absolute path and then run the registered `codex_web_search` tool
 through the production `CodexRunner`; they do not rely on a real `codex` binary,
 Codex authentication, or network access.
@@ -575,15 +574,16 @@ data.
 
 * no shell command construction from query input;
 * no reading, copying, or logging Codex credentials;
-* no default write sandbox and no write-capable sandbox allowlist in Ticket 004 or Ticket 010 configuration;
+* no default write sandbox and no write-capable sandbox allowlist in argv construction or configuration;
 * configuration reads only documented environment variables or explicit in-process config and never reads Codex credential files;
-* subprocess time and stdout/stderr buffers are bounded by Ticket 005;
-* formatted Pi tool text is bounded by Ticket 007 and omits raw stderr from
+* subprocess time and stdout/stderr buffers are bounded by `CodexRunner`;
+* formatted Pi tool text is bounded by the formatter and omits raw stderr from
   user-facing error output;
-* Ticket 008 throws formatted, sanitized failures so Pi marks failed tool calls
-  as errors without exposing raw stderr or local/private paths in the message;
-* Ticket 009's `/codex-web-search` command is static help only and never invokes
-  Codex or reads credentials;
-* Ticket 011's fake-Codex integration tests configure the runner to call only
-  the checked-in fixture, not the real Codex binary;
+* registration throws formatted, sanitized failures so Pi marks failed tool
+  calls as errors without exposing raw stderr or local/private paths in the
+  message;
+* the `/codex-web-search` command is static help only and never invokes Codex or
+  reads credentials;
+* fake-Codex integration tests configure the runner to call only the checked-in
+  fixture, not the real Codex binary;
 * automated tests must not invoke real Codex by default.

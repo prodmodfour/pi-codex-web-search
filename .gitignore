@@ -15,9 +15,8 @@ coverage/
 .vitest/
 *.tsbuildinfo
 
-# autonomous-agent logs
+# agent/runtime logs
 .agent/logs/
-.agent/build-loop.lock/
 
 # Pi local runtime/install artifacts
 .pi/sessions/

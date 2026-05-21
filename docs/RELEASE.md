@@ -2,7 +2,7 @@
 
 This repository ships a Pi package. Release validation is about proving what Pi users will receive without committing generated artifacts, private logs, or credentials.
 
-The automated build does not publish to npm and does not require real Codex authentication. Real Codex/Pi validation remains the manual path documented in [`MANUAL_VALIDATION.md`](MANUAL_VALIDATION.md).
+The repository tooling does not publish to npm and does not require real Codex authentication. Real Codex/Pi validation remains the manual path documented in [`MANUAL_VALIDATION.md`](MANUAL_VALIDATION.md).
 
 ## Package contents policy
 
@@ -19,7 +19,7 @@ npm always includes `package.json`; the allowlist intentionally keeps the publis
 * user/maintainer documentation under `docs/`;
 * `README.md` and package metadata.
 
-The package must not include tests, fake-Codex fixtures, autonomous build notes, agent prompts, repository scripts (including the opt-in real-Codex smoke script), dependency directories, build output, coverage output, real environment files, Codex runtime/auth files, or npm tarballs. Keep using the `files` allowlist unless a future release intentionally changes the package strategy; a `.npmignore` is not needed while the allowlist remains this narrow.
+The package must not include tests, fake-Codex fixtures, local workflow notes, repository scripts (including the opt-in real-Codex smoke script), dependency directories, build output, coverage output, real environment files, Codex runtime/auth files, or npm tarballs. Keep using the `files` allowlist unless a future release intentionally changes the package strategy; a `.npmignore` is not needed while the allowlist remains this narrow.
 
 ## Local release checklist
 
