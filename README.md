@@ -2,7 +2,7 @@
 
 `pi-codex-web-search` is a TypeScript Pi package for a `codex_web_search` tool. The package is intended to let Pi call the local Codex CLI for web-enabled answers while relying on the user's existing Codex/ChatGPT authentication.
 
-> Status: build in progress. The current package registers `codex_web_search` plus a `/codex-web-search` help command, validates tool parameters and safe configuration, runs the bounded Codex subprocess pipeline, parses `codex exec --json` output, formats concise Pi tool results, and covers the path with a fake-Codex executable integration harness. Full manual real-Codex validation docs are still a future ticket.
+> Status: build in progress. The current package registers `codex_web_search` plus a `/codex-web-search` help command, validates tool parameters and safe configuration, runs the bounded Codex subprocess pipeline, parses `codex exec --json` output, formats concise Pi tool results, covers the path with a fake-Codex executable integration harness, and documents manual real-Codex validation.
 
 ## Current package shape
 
@@ -111,4 +111,4 @@ The current argv builder returns arguments for `CodexRunner`, which calls the co
 
 `formatCodexWebSearchToolResult` converts normalized success/failure results into Pi text content plus structured details. The formatter includes source URLs/snippets when available, enforces `maxOutputChars`, adds a truncation notice, and omits raw stderr/query text from user-facing error output.
 
-Automated tests use mocks or the deterministic fake executable under `test/fixtures/fake-codex.mjs`. Real Codex validation belongs in `docs/MANUAL_VALIDATION.md` and requires a local user who has installed Codex and run `codex login`.
+Automated tests use mocks or the deterministic fake executable under `test/fixtures/fake-codex.mjs`. Real Codex validation is documented in [`docs/MANUAL_VALIDATION.md`](docs/MANUAL_VALIDATION.md) and requires a local user who has installed Codex and run `codex login`.

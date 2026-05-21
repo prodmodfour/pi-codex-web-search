@@ -283,7 +283,7 @@ Commit when complete.
 
 ## 012 — Add manual real-Codex validation guide
 
-Status: TODO
+Status: DONE
 
 Document the real-world validation path that requires local user auth.
 

@@ -2,23 +2,24 @@
 
 ## Current state
 
-Tickets 000 through 011 are complete. The repository now has a TypeScript/npm Pi package skeleton, project-specific validation guardrails, a frozen Pi extension/package contract, the finalized `codex_web_search` tool API contract, a safe `codex exec` argv builder, a bounded Codex subprocess runner, a JSONL parser for `codex exec --json` stdout, a bounded formatter for Pi tool output, Pi tool registration wiring, a small optional Pi slash-command help surface, safe configuration handling, and a fake-Codex integration test harness.
+Tickets 000 through 012 are complete. The repository now has a TypeScript/npm Pi package skeleton, project-specific validation guardrails, a frozen Pi extension/package contract, the finalized `codex_web_search` tool API contract, a safe `codex exec` argv builder, a bounded Codex subprocess runner, a JSONL parser for `codex exec --json` stdout, a bounded formatter for Pi tool output, Pi tool registration wiring, a small optional Pi slash-command help surface, safe configuration handling, a fake-Codex integration test harness, and a manual real-Codex validation guide.
 
-Ticket 011 added in this cycle:
+Ticket 012 added in this cycle:
 
-* added `test/fixtures/fake-codex.mjs`, an executable fake Codex CLI fixture that accepts the reviewed `codex exec --json [--search] --skip-git-repo-check --sandbox read-only -- <prompt>` argv shape
-* made the fixture emit representative successful JSONL with a web-search event, final agent message, and public example source URLs
-* added fixture-selected failure modes for timeout, non-zero exit, malformed JSONL, and missing final agent message
-* added `test/fake-codex-integration.test.mjs` to run the registered `codex_web_search` tool through the production `CodexRunner` using the fake binary path, without injecting a fake runner
-* asserted final Pi tool output and structured details for the successful fake-Codex path
-* asserted sanitized Pi tool failures for timeout, non-zero exit, malformed JSONL, and missing-final-message cases
-* updated README, architecture, extension spec, quality-gate, and security docs to describe the fake-executable integration coverage
+* expanded `docs/MANUAL_VALIDATION.md` from a scaffold into a step-by-step human validation guide for machines with Pi, Codex CLI, user authentication, and network access
+* documented Codex setup commands, including `npm install -g @openai/codex` and `codex login`
+* documented a direct `codex exec --search --skip-git-repo-check --sandbox read-only ...` smoke test before loading Pi
+* documented temporary `pi -e` loading and project-local `pi install -l` loading for the local package
+* added expected output shapes for the direct Codex smoke test, `/codex-web-search` help command, and live `codex_web_search` Pi tool call
+* added manual troubleshooting notes for missing Codex, unauthenticated Codex, disabled web search or cached/live confusion, network failures, and timeouts
+* added repeated reminders not to inspect, share, upload, or commit `~/.codex/auth.json` or private validation logs
+* updated README status text to point at the manual validation guide instead of calling it a future ticket
 
-No Codex live search, authenticated Codex run, real Codex CLI execution, Codex credential access, network access, or browser automation was used in this cycle. Automated tests configure the runner to call the checked-in fake executable fixture rather than the real `codex` binary.
+No Codex live search, authenticated Codex run, real Codex CLI execution, Codex credential access, browser automation, or network research was used in this cycle. The new guide documents how a human can run those checks manually, but automated validation remains fake-Codex/mocked by default.
 
 ## Quality gates
 
-Ran `scripts/quality-gate.sh` successfully after implementing Ticket 011.
+Ran `scripts/quality-gate.sh` successfully after implementing Ticket 012.
 
 The passing gate performed:
 
@@ -40,7 +41,9 @@ The npm package dry-run included only the intended package files from the packag
 
 None for automated quality validation.
 
-The fake-Codex fixture is intentionally a deterministic test executable, not a Codex emulator. It validates the expected safe argv shape and covers representative success/failure cases, but real Codex JSONL schemas and authentication behavior still require later manual validation.
+Manual real-Codex validation still requires a human machine with Pi installed, Codex CLI installed, `codex login` completed, a Pi model/provider configured, and network access. This remains an external manual activity; the repository now documents the procedure but does not run it during the automated gate.
+
+The fake-Codex fixture is intentionally a deterministic test executable, not a Codex emulator. It validates the expected safe argv shape and covers representative success/failure cases, but real Codex JSONL schemas and authentication behavior still require the manual validation path.
 
 The local Pi contract in `src/pi/piExtensionContract.ts` is intentionally narrow and mirrors only the subset frozen in `docs/EXTENSION_SPEC.md`. It should be replaced or reconciled explicitly if a future ticket imports official Pi runtime types or TypeBox schemas directly.
 
@@ -56,12 +59,8 @@ The `/codex-web-search` command uses Pi's UI notification surface when available
 
 `formatCodexWebSearchToolResult` and `CodexWebSearchToolExecutionError` intentionally omit raw stderr, query text, argv, and local/private paths from thrown tool-error messages. Safe diagnostic metadata remains available in formatted details.
 
-`CodexRunner` can execute a real Codex binary through the registered tool, but automated tests only use mocked executors, JSONL fixtures, fake runners, and the checked-in fake Codex executable. Manual real-Codex validation will require a machine with:
-
-* Pi installed
-* Codex CLI installed
-* `codex login` completed with the user's ChatGPT/Codex account
+`CodexRunner` can execute a real Codex binary through the registered tool, but automated tests only use mocked executors, JSONL fixtures, fake runners, and the checked-in fake Codex executable.
 
 ## Next recommended ticket
 
-Ticket 012 — Add manual real-Codex validation guide.
+Ticket 013 — Add installation and package docs.
