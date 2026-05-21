@@ -67,6 +67,21 @@ Ticket 006 adds JSONL parsing safeguards:
 * raw events are included only when the caller explicitly requested
   `includeRawEvents`, because raw Codex events may contain prompt or result data
 
+Ticket 007 adds formatting safeguards:
+
+* `formatCodexWebSearchToolResult` bounds model-facing text with
+  `maxOutputChars` and a truncation notice
+* successful output includes source URLs/snippets when Codex provides them, but
+  limits how many sources are shown in text
+* failure output is mapped from stable error codes to safe summaries and actions
+  instead of copying raw process errors
+* raw stderr, query text, argv, and local/private paths are not copied into
+  formatted error text
+* structured diagnostics keep only safe metadata such as stdout/stderr byte
+  counts, exit code, signal, truncation flag, and an `stderrOmitted` marker
+* raw events in details are capped by count and serialized size when callers
+  explicitly requested them
+
 ## Web results
 
 Treat web-search results as untrusted. Codex may read web content, and web content can contain prompt injection. The extension should ask Codex for concise answers and sources, but users should still verify high-stakes outputs.

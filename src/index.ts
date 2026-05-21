@@ -27,6 +27,12 @@ export {
 } from "./codex/CodexJsonlParser.js";
 
 export {
+  CODEX_WEB_SEARCH_FORMAT_LIMITS,
+  boundCodexWebSearchToolText,
+  formatCodexWebSearchToolResult,
+} from "./output/formatToolResult.js";
+
+export {
   CODEX_WEB_SEARCH_DEFAULTS,
   CODEX_WEB_SEARCH_LIMITS,
   CODEX_WEB_SEARCH_MODES,
@@ -67,6 +73,14 @@ export type {
   CodexJsonlRawOutput,
   CodexJsonlWebSearchSummary,
 } from "./codex/CodexJsonlParser.js";
+
+export type {
+  CodexWebSearchFormattedErrorDetails,
+  CodexWebSearchPiToolResult,
+  CodexWebSearchSafeDiagnostics,
+  CodexWebSearchToolResultDetails,
+  FormatCodexWebSearchToolResultOptions,
+} from "./output/formatToolResult.js";
 
 export type {
   CodexOutputFormat,

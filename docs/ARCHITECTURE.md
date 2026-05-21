@@ -75,8 +75,28 @@ those remain separate modules.
 * can include raw parsed events only when explicitly requested by the normalized
   tool input.
 
-The parser intentionally does not format Pi `content`; Ticket 007 owns the
-formatter.
+The parser intentionally does not format Pi `content`; the formatter remains a
+separate module.
+
+## Implemented tool-result formatter boundary
+
+`src/output/formatToolResult.ts` owns the final conversion from normalized
+Codex web-search results into Pi tool results. It:
+
+* returns one text content item plus structured details;
+* keeps successful answers concise and adds a `Sources:` section when parsed
+  source URLs or snippets are available;
+* enforces `maxOutputChars` using the same bounds as the public tool API and
+  appends a truncation notice when content is shortened;
+* handles empty successful answers with a clear placeholder message;
+* maps structured failure codes to actionable, code-specific messages;
+* omits raw stderr, query text, argv, and local paths from model-facing error
+  text while retaining safe diagnostic metadata such as byte counts, exit code,
+  signal, and whether stderr was omitted;
+* bounds structured `rawEvents` details when callers explicitly requested them.
+
+The formatter intentionally does not execute Codex or register the Pi tool;
+Ticket 008 owns registration and wiring.
 
 ## Test strategy
 

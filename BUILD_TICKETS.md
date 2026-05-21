@@ -174,7 +174,7 @@ Commit when complete.
 
 ## 007 — Implement tool-result formatting
 
-Status: TODO
+Status: DONE
 
 Create the formatter that turns Codex output into Pi tool content.
 

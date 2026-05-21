@@ -5,8 +5,8 @@
 This document freezes the Pi extension/package contract that this package targets.
 It also freezes the Ticket 003 `codex_web_search` tool API, the Ticket 004 safe
 `codex exec` argv-builder contract, the Ticket 005 bounded subprocess-runner
-contract, and the Ticket 006 JSONL-parser contract. Later tickets own result
-formatting and final Pi registration.
+contract, the Ticket 006 JSONL-parser contract, and the Ticket 007 tool-result
+formatter contract. Later tickets own final Pi registration.
 
 ## Research basis
 
@@ -413,7 +413,44 @@ Parser compatibility assumptions:
 
 Parser errors intentionally do not echo raw JSONL line contents, query text, or
 stderr in the error message. Stderr remains available in structured diagnostics
-for future formatting.
+for the formatter boundary.
+
+## Tool-result formatter contract
+
+Ticket 007 implements `src/output/formatToolResult.ts` for converting the
+normalized success/failure union into Pi tool output.
+
+Primary exports:
+
+* `formatCodexWebSearchToolResult(result, options)` returns a Pi-style
+  `{ content, details }` result with one text content item.
+* `boundCodexWebSearchToolText(text, maxOutputChars)` applies the same bounded
+  text/truncation-notice behavior for tests and future callers.
+* `CODEX_WEB_SEARCH_FORMAT_LIMITS` documents formatter-specific caps for source
+  display and raw-event details.
+
+Formatter behavior:
+
+* successful results use the parsed answer as the default text;
+* empty successful answers become `Codex completed but returned an empty answer.`;
+* source URLs, titles, and snippets are included under a `Sources:` section when
+  available, with at most 10 sources in model-facing text;
+* `maxOutputChars` defaults to `12000` and must remain within the Ticket 003
+  public bounds of 500-50000 characters;
+* over-limit text is shortened and ends with `[Output truncated to N characters.]`;
+* failures are mapped by stable failure code to concise summaries and suggested
+  actions;
+* raw stderr, query text, argv, and local/private paths are not copied into
+  formatted error text;
+* structured `details.diagnostics` contains only safe metadata: byte counts,
+  exit code, signal, truncation flag, and whether stderr was omitted;
+* raw JSONL events are included in `details.rawEvents` only when already present
+  in the normalized result, and are capped by count and serialized size.
+
+Registration code should pass the normalized input's `maxOutputChars` to the
+formatter. Pi tool execution may still throw for failed calls; this formatter
+also supports normalized failure values so future registration/error tests can
+produce consistent text before throwing or reporting failure.
 
 ## Safety requirements
 
@@ -421,5 +458,6 @@ for future formatting.
 * no reading, copying, or logging Codex credentials;
 * no default write sandbox and no write-capable sandbox allowlist in Ticket 004;
 * subprocess time and stdout/stderr buffers are bounded by Ticket 005;
-* formatted Pi tool output remains a future Ticket 007 responsibility;
+* formatted Pi tool text is bounded by Ticket 007 and omits raw stderr from
+  user-facing error output;
 * automated tests must not invoke real Codex by default.
