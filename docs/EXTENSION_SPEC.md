@@ -3,8 +3,9 @@
 ## Scope
 
 This document freezes the Pi extension/package contract that this package targets.
-It does **not** implement Codex execution or finalize the `codex_web_search` tool
-input schema; later tickets own those pieces.
+It also freezes the Ticket 003 `codex_web_search` tool API. It does **not**
+implement Codex execution; later tickets own argv construction, subprocess
+execution, JSONL parsing, result formatting, and final Pi registration.
 
 ## Research basis
 
@@ -182,12 +183,14 @@ Purpose: search the web through the local Codex CLI from inside Pi, primarily to
 let a user with ChatGPT/Codex login reuse Codex's web-search capability rather
 than calling the OpenAI API web-search endpoint.
 
-## Draft parameters for later tickets
+## Finalized `codex_web_search` tool API
 
-Ticket 003 will finalize and test the tool API. The current draft remains:
+Ticket 003 defines the TypeScript contract and validation functions in
+`src/tool/codexWebSearchApi.ts`. The final Pi registration should expose these
+parameters and reject unknown properties.
 
 ```ts
-interface CodexWebSearchInput {
+interface CodexWebSearchToolInput {
   query: string;
   mode?: "live" | "cached";
   timeoutMs?: number;
@@ -196,15 +199,90 @@ interface CodexWebSearchInput {
 }
 ```
 
-Conservative defaults still expected for later tickets:
+### Parameters
+
+| Parameter | Required | Default | Validation | Meaning |
+| --- | --- | --- | --- | --- |
+| `query` | yes | none | string, trimmed, 1-4000 chars | Search question or task passed to Codex as data, never shell-interpolated. |
+| `mode` | no | `"live"` | `"live"` or `"cached"` | `"live"` requests Codex `--search`; `"cached"` explicitly omits `--search`. |
+| `timeoutMs` | no | `120000` | integer from `1000` to `300000` | Subprocess timeout budget for a later runner. |
+| `maxOutputChars` | no | `12000` | integer from `500` to `50000` | Maximum formatted Pi tool-output length for a later formatter. |
+| `includeRawEvents` | no | `false` | boolean | Allows later parser/formatter code to include bounded raw JSONL events in structured details. |
+
+Live search is on by default because this is a web-search tool. Callers can set
+`mode: "cached"` when they explicitly do not want Codex's live `--search` flag.
+The implementation must still emit `--search` only when normalized mode is
+`"live"`.
+
+### Execution defaults frozen by the API
+
+These defaults are included in `NormalizedCodexWebSearchInput` for later argv
+builder and runner tickets:
 
 ```text
 sandbox: read-only
-codex binary: codex
+outputFormat: jsonl
+skipGitRepoCheck: true
+codex binary: codex (runner default, not a tool parameter yet)
 timeoutMs: 120000
+maxBufferBytes: 2097152
 maxOutputChars: 12000
 includeRawEvents: false
 ```
+
+The sandbox is intentionally not exposed as a tool-call parameter in Ticket 003.
+Future configuration work may add validated configuration overrides, but the
+default remains read-only.
+
+### Normalized result shape
+
+The internal normalized result type is a success/failure union:
+
+```ts
+type CodexWebSearchNormalizedResult =
+  | {
+      ok: true;
+      query: string;
+      mode: "live" | "cached";
+      liveSearch: boolean;
+      answer: string;
+      sources: CodexWebSearchSource[];
+      rawEvents?: CodexWebSearchRawEvent[];
+      diagnostics?: CodexWebSearchDiagnostics;
+    }
+  | {
+      ok: false;
+      error: {
+        code: CodexWebSearchFailureCode;
+        message: string;
+        retryable: boolean;
+      };
+      query?: string;
+      mode?: "live" | "cached";
+      diagnostics?: CodexWebSearchDiagnostics;
+    };
+```
+
+Pi tool execution should still throw for failed tool calls, per the frozen Pi
+contract above. This normalized union gives later runner/parser/formatter code a
+stable internal shape before it becomes Pi `content` and `details`.
+
+### Failure modes
+
+The API reserves these failure codes for later tickets:
+
+* `invalid_input`
+* `codex_not_found`
+* `codex_timeout`
+* `codex_nonzero_exit`
+* `codex_output_too_large`
+* `codex_parse_error`
+* `codex_missing_final_message`
+* `codex_cancelled`
+* `unknown_error`
+
+Validation errors use structured issue codes and messages that do not echo the
+query value.
 
 ## Future Codex command shape
 

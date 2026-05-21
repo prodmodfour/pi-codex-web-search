@@ -81,7 +81,7 @@ Commit when complete.
 
 ## 003 — Define the `codex_web_search` tool API
 
-Status: TODO
+Status: DONE
 
 Specify the tool parameters, defaults, return format, and failure modes.
 

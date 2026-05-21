@@ -21,9 +21,14 @@ In particular, never commit:
 
 Authentication is Codex CLI's responsibility. The extension should simply fail clearly if Codex is missing or unauthenticated.
 
-## Subprocess safety
+## Input and subprocess safety
 
-Required:
+Ticket 003 validation normalizes `codex_web_search` input before any future
+subprocess call. It trims and bounds `query`, rejects unknown parameters, bounds
+`timeoutMs` and `maxOutputChars`, and does not echo the query value in validation
+error messages.
+
+Required for later subprocess tickets:
 
 * use `execFile` or `spawn` with argv arrays
 * never use `shell: true`

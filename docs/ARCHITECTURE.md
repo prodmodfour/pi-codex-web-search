@@ -17,6 +17,7 @@ Pi extension entrypoint
 ```text
 extensions/codex-web-search.ts
 src/pi/piExtensionContract.ts          # current local contract/test subset
+src/tool/codexWebSearchApi.ts          # tool input/result types and validation
 src/pi/registerCodexWebSearchTool.ts   # future registration module
 src/codex/buildCodexArgs.ts
 src/codex/CodexRunner.ts
@@ -30,7 +31,7 @@ Automated tests must use mocks or fake executables. Real Codex auth is a manual 
 
 Expected automated coverage:
 
-* input validation
+* input validation and normalization
 * argv construction
 * subprocess timeout/error handling
 * JSONL parsing

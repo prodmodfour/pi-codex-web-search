@@ -2,14 +2,15 @@
 
 `pi-codex-web-search` is a TypeScript Pi package scaffold for a future `codex_web_search` tool. The package is intended to let Pi call the local Codex CLI for web-enabled answers while relying on the user's existing Codex/ChatGPT authentication.
 
-> Status: build in progress. The current package only exposes a safe, no-op placeholder extension entrypoint. It does **not** call Codex or register the final tool yet.
+> Status: build in progress. The current package exposes a safe, no-op placeholder extension entrypoint plus the typed/validated `codex_web_search` API contract. It does **not** call Codex or register the final tool yet.
 
 ## Current package shape
 
 ```text
 package.json                         # npm metadata plus the pi.extensions manifest
 extensions/codex-web-search.ts       # placeholder Pi extension entrypoint
-src/index.ts                         # shared package metadata constants
+src/index.ts                         # shared package metadata and exported API contract
+src/tool/codexWebSearchApi.ts        # codex_web_search input/result types and validation
 test/package-shape.test.mjs          # smoke tests for the package skeleton
 docs/                                # design, security, usage, validation, and quality-gate notes
 scripts/quality-gate.sh              # local validation gate used by the build loop
@@ -53,9 +54,10 @@ The gate runs shell syntax checks, secret and generated-file guardrails, npm val
 Later tickets will replace the placeholder with a Pi tool named `codex_web_search` that:
 
 * validates user input before invoking Codex
+* accepts `query`, optional `mode`, `timeoutMs`, `maxOutputChars`, and `includeRawEvents`
+* defaults `mode` to `live`, read-only Codex sandbox, JSONL output, 120s timeout, 2 MiB subprocess buffer, and 12k formatted output chars
 * executes `codex exec` with argv arrays, never shell-interpolated strings
-* defaults to `codex exec --sandbox read-only`
-* uses Codex `--search` only when live web search is requested
+* uses Codex `--search` only when normalized mode is `live`
 * bounds time, stdout, stderr, and returned Pi tool content
 * parses or formats Codex output into concise Pi tool results
 
