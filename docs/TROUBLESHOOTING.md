@@ -27,6 +27,14 @@ pi --version
 codex --version
 ```
 
+If Codex is installed and authenticated and you are in a repository checkout, you can opt in to the real web-search smoke script:
+
+```bash
+npm run smoke:codex
+```
+
+That script is not part of the automated quality gate. It uses a harmless read-only `codex exec --search` query, writes no log files, and omits raw stderr from failures.
+
 If Pi loads but the extension does not seem active, run this inside Pi:
 
 ```text
@@ -44,7 +52,7 @@ The tool formats failed calls with a stable code such as `Codex web search faile
 | `invalid_input` | Missing/empty `query`, unknown parameter, invalid mode/timeout/output limit, or invalid config default. | Retry with documented parameters; unset invalid `PI_CODEX_WEB_SEARCH_*` values. |
 | `codex_not_found` | Pi's environment cannot find the configured Codex executable. | Install Codex or set `PI_CODEX_WEB_SEARCH_CODEX_BINARY` before launching Pi. |
 | `codex_timeout` | Codex did not finish within `timeoutMs`. | Ask a narrower query or raise `timeoutMs` within `1000..300000`. |
-| `codex_nonzero_exit` | Codex exited with an error, commonly authentication, account/search availability, or network failure. | Run a direct `codex exec --search ...` smoke test in the same shell and fix Codex first. |
+| `codex_nonzero_exit` | Codex exited with an error, commonly authentication, account/search availability, or network failure. | Run `npm run smoke:codex` from the checkout or a direct `codex exec --search ...` smoke test in the same shell and fix Codex first. |
 | `codex_output_too_large` | Codex stdout/stderr exceeded the runner process buffer. | Ask for a narrower answer or fewer sources. |
 | `codex_parse_error` | `codex exec --json` output was malformed or schema-incompatible. | Retry once; update Codex/extension; report a sanitized fixture if persistent. |
 | `codex_missing_final_message` | Codex JSONL completed without a final assistant/agent message. | Retry once; verify the installed Codex supports `codex exec --json`. |
@@ -174,13 +182,19 @@ Fix:
 codex login
 ```
 
-Then run a direct smoke test before retrying inside Pi:
+Then run the opt-in repository smoke script before retrying inside Pi:
 
 ```bash
-codex exec --search --skip-git-repo-check --sandbox read-only "Search the web for the current UTC date. Return one sentence and one public source URL."
+npm run smoke:codex
 ```
 
-Do not inspect or share `~/.codex/auth.json`; authentication storage belongs to the Codex CLI.
+If you are not in a repository checkout, run the equivalent direct command privately:
+
+```bash
+codex exec --search --skip-git-repo-check --sandbox read-only -- "Search the web for the current UTC date. Return one sentence and one public source URL."
+```
+
+Do not inspect or share `~/.codex/auth.json`; authentication storage belongs to the Codex CLI. Do not commit raw terminal output from failed real-Codex runs.
 
 ## Live search, cached mode, and disabled web search
 
@@ -199,8 +213,11 @@ How the extension decides:
 Checks and fixes:
 
 ```bash
-# Check the direct live-search path outside Pi.
-codex exec --search --skip-git-repo-check --sandbox read-only "Search the web for the current UTC date. Return one sentence and one public source URL."
+# From a repository checkout, check the direct live-search path with the opt-in script.
+npm run smoke:codex
+
+# Or run the equivalent direct command privately outside Pi.
+codex exec --search --skip-git-repo-check --sandbox read-only -- "Search the web for the current UTC date. Return one sentence and one public source URL."
 
 # Check whether a session default is forcing cached mode.
 printf '%s\n' "$PI_CODEX_WEB_SEARCH_DEFAULT_MODE"
@@ -261,7 +278,7 @@ Symptoms:
 
 Checks and fixes:
 
-* Retry the direct Codex smoke test from the same terminal that launches Pi.
+* Retry `npm run smoke:codex` from a repository checkout, or retry the direct Codex smoke test from the same terminal that launches Pi.
 * Confirm network, VPN, proxy, firewall, and TLS-interception settings.
 * Export required proxy variables before launching Pi so the Codex subprocess inherits them.
 * Check your Codex/ChatGPT plan limits and organization/account search availability.

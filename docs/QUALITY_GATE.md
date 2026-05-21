@@ -8,7 +8,7 @@ scripts/quality-gate.sh
 npm run quality
 ```
 
-The gate is intentionally safe for automated runs: it does not require Pi, a real Codex CLI, Codex authentication, or network access beyond normal npm dependency installation. Integration coverage uses the checked-in fake Codex executable fixture under `test/fixtures/` rather than the real `codex` binary.
+The gate is intentionally safe for automated runs: it does not require Pi, a real Codex CLI, Codex authentication, or network access beyond normal npm dependency installation. Integration coverage uses the checked-in fake Codex executable fixture under `test/fixtures/` rather than the real `codex` binary. The opt-in authenticated smoke script (`npm run smoke:codex`) is intentionally not called by the gate.
 
 ## GitHub Actions CI
 
@@ -20,7 +20,7 @@ bash scripts/quality-gate.sh
 
 Because the local gate owns the check list, CI runs the shell syntax checks, secret and generated/private-file guardrails, npm validation scripts, tests, build/type checks, and `npm run pack:check` package dry-run validation without duplicating the logic in workflow YAML.
 
-CI intentionally does not install Pi, install or authenticate the real Codex CLI, run `codex login`, perform live web search, publish to npm, or exercise account-specific behaviour. Real Codex/Pi validation remains an opt-in human activity documented in [`MANUAL_VALIDATION.md`](MANUAL_VALIDATION.md).
+CI intentionally does not install Pi, install or authenticate the real Codex CLI, run `codex login`, run `npm run smoke:codex`, perform live web search, publish to npm, or exercise account-specific behaviour. Real Codex/Pi validation remains an opt-in human activity documented in [`MANUAL_VALIDATION.md`](MANUAL_VALIDATION.md).
 
 ## Checks
 
@@ -42,7 +42,7 @@ When the gate installs dependencies and `node_modules/` was not present at start
 
 ## npm script map
 
-Convenience scripts mirror the gate components:
+Convenience scripts cover the gate components plus the explicitly opt-in real-Codex smoke check:
 
 ```bash
 npm run quality
@@ -54,9 +54,10 @@ npm run typecheck
 npm test
 npm run build
 npm run pack:check
+npm run smoke:codex
 ```
 
-`pack:check` is implemented by `scripts/check-package-contents.mjs`. It does not create a tarball; it validates the npm dry-run output and prints the files that would ship. Release-specific packaging notes are in [`RELEASE.md`](RELEASE.md).
+`pack:check` is implemented by `scripts/check-package-contents.mjs`. It does not create a tarball; it validates the npm dry-run output and prints the files that would ship. `smoke:codex` is manual-only: it runs the local authenticated Codex CLI with a harmless read-only web-search query and may consume Codex/ChatGPT plan limits, so do not add it to the default gate or CI. Release-specific packaging notes are in [`RELEASE.md`](RELEASE.md).
 
 ## Limitations
 

@@ -443,7 +443,7 @@ Commit when complete.
 
 ## 019 — Add opt-in real-Codex smoke script
 
-Status: TODO
+Status: DONE
 
 Provide a manual script for authenticated users to verify real Codex search.
 

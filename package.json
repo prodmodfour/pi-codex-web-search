@@ -32,7 +32,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node --test test/*.test.mjs",
     "build": "npm run typecheck",
-    "pack:check": "node scripts/check-package-contents.mjs"
+    "pack:check": "node scripts/check-package-contents.mjs",
+    "smoke:codex": "node scripts/smoke-real-codex-search.mjs"
   },
   "devDependencies": {
     "@types/node": "^20.17.19",

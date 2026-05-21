@@ -228,6 +228,7 @@ Automated validation is safe by default:
 * unit tests mock process execution or use a checked-in fake Codex executable;
 * fake-Codex tests do not require a real Codex binary, Codex authentication, network access, or web search;
 * the quality gate runs shell syntax checks, secret guardrails, generated/private-file guardrails, npm checks, tests, build, and package dry-run;
+* `npm run smoke:codex` is opt-in only, uses Node `spawn` with `shell: false`, runs a harmless `codex exec --search --skip-git-repo-check --sandbox read-only -- <query>` check, writes no log files, and omits raw stderr/stdout from failed Codex runs;
 * real Codex validation is manual and documented in [`MANUAL_VALIDATION.md`](MANUAL_VALIDATION.md).
 
 ## Security maintenance checklist

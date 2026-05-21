@@ -5,7 +5,10 @@ import test from "node:test";
 
 const packageJsonUrl = new URL("../package.json", import.meta.url);
 const qualityGateDocsUrl = new URL("../docs/QUALITY_GATE.md", import.meta.url);
+const manualValidationDocsUrl = new URL("../docs/MANUAL_VALIDATION.md", import.meta.url);
 const localPiProjectExampleDocsUrl = new URL("../docs/EXAMPLE_LOCAL_PI_PROJECT.md", import.meta.url);
+const qualityGateScriptUrl = new URL("../scripts/quality-gate.sh", import.meta.url);
+const realCodexSmokeScriptUrl = new URL("../scripts/smoke-real-codex-search.mjs", import.meta.url);
 const qualityWorkflowUrl = new URL("../.github/workflows/quality.yml", import.meta.url);
 const packageJson = JSON.parse(await readFile(packageJsonUrl, "utf8"));
 
@@ -17,7 +20,7 @@ test("extension source exists", () => {
   assert.equal(existsSync(new URL("../extensions/codex-web-search.ts", import.meta.url)), true);
 });
 
-test("npm scripts map to the quality gate", () => {
+test("package declares expected npm scripts", () => {
   for (const scriptName of [
     "quality",
     "check:shell",
@@ -28,6 +31,7 @@ test("npm scripts map to the quality gate", () => {
     "test",
     "build",
     "pack:check",
+    "smoke:codex",
   ]) {
     assert.equal(typeof packageJson.scripts?.[scriptName], "string", `${scriptName} script should exist`);
   }
@@ -40,6 +44,28 @@ test("package files allowlist stays narrow", () => {
 test("pack check uses the package contents validator", () => {
   assert.match(packageJson.scripts["pack:check"], /scripts\/check-package-contents\.mjs/);
   assert.equal(existsSync(new URL("../scripts/check-package-contents.mjs", import.meta.url)), true);
+});
+
+test("real Codex smoke script is opt-in and documented", async () => {
+  assert.equal(existsSync(realCodexSmokeScriptUrl), true);
+  assert.match(packageJson.scripts["smoke:codex"], /scripts\/smoke-real-codex-search\.mjs/);
+
+  const qualityGate = await readFile(qualityGateScriptUrl, "utf8");
+  assert.doesNotMatch(qualityGate, /smoke:codex|smoke-real-codex-search/);
+
+  const script = await readFile(realCodexSmokeScriptUrl, "utf8");
+  assert.match(script, /spawn\(/);
+  assert.match(script, /shell:\s*false/);
+  assert.match(script, /"--search"/);
+  assert.match(script, /"--sandbox"/);
+  assert.match(script, /"read-only"/);
+  assert.match(script, /current UTC date/);
+  assert.match(script, /writes no log files/);
+  assert.match(script, /Raw stderr\/stdout from failed Codex runs is intentionally omitted/);
+
+  const manualValidationDocs = await readFile(manualValidationDocsUrl, "utf8");
+  assert.match(manualValidationDocs, /npm run smoke:codex/);
+  assert.match(manualValidationDocs, /not part of the automated quality gate/);
 });
 
 test("release documentation exists", () => {

@@ -26,6 +26,7 @@ test/fixtures/fake-codex.mjs              # deterministic fake codex exec fixtur
 docs/                                # install, example fixture, design, security, usage, validation, and quality-gate notes
 scripts/quality-gate.sh              # local validation gate used by the build loop
 scripts/check-package-contents.mjs   # npm dry-run package contents validator
+scripts/smoke-real-codex-search.mjs  # opt-in authenticated real-Codex smoke test
 ```
 
 The Pi manifest currently points to the TypeScript entrypoint:
@@ -103,7 +104,15 @@ scripts/quality-gate.sh
 npm run quality
 ```
 
-The gate runs shell syntax checks, secret and generated-file guardrails, npm validation scripts, and a package dry-run with package-contents validation. See [`docs/QUALITY_GATE.md`](docs/QUALITY_GATE.md) for the full checklist and [`docs/RELEASE.md`](docs/RELEASE.md) for release packaging steps.
+The gate runs shell syntax checks, secret and generated-file guardrails, npm validation scripts, and a package dry-run with package-contents validation. It does **not** run the authenticated Codex smoke script.
+
+After installing and authenticating Codex, a human can opt in to a real web-search smoke test from a repository checkout:
+
+```bash
+npm run smoke:codex
+```
+
+That script runs a harmless read-only `codex exec --search` query, writes no log files, omits raw stderr from failures, and may consume Codex/ChatGPT plan limits. See [`docs/MANUAL_VALIDATION.md`](docs/MANUAL_VALIDATION.md) before running it. See [`docs/QUALITY_GATE.md`](docs/QUALITY_GATE.md) for the full automated checklist and [`docs/RELEASE.md`](docs/RELEASE.md) for release packaging steps.
 
 GitHub Actions runs the same quality gate on pushes, pull requests, and manual workflow dispatches through `.github/workflows/quality.yml`. CI is intentionally limited to fake-Codex/mocked automated coverage and does not install Pi, authenticate Codex, perform live web search, or publish the package; use [`docs/MANUAL_VALIDATION.md`](docs/MANUAL_VALIDATION.md) for real local Codex/Pi validation.
 

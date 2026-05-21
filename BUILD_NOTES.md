@@ -2,21 +2,22 @@
 
 ## Current state
 
-Tickets 000 through 018 are complete. The repository now has a TypeScript/npm Pi package skeleton, project-specific validation guardrails, a frozen Pi extension/package contract, the finalized `codex_web_search` tool API contract, a safe `codex exec` argv builder, a bounded Codex subprocess runner, a JSONL parser for `codex exec --json` stdout, a bounded formatter for Pi tool output, Pi tool registration wiring, a small optional Pi slash-command help surface, safe configuration handling, a fake-Codex integration test harness, a manual real-Codex validation guide, user-facing installation/package documentation, a security threat model, expanded troubleshooting guidance, release/package-content validation, a GitHub Actions quality workflow, and a docs-only local Pi project fixture.
+Tickets 000 through 019 are complete. The repository now has a TypeScript/npm Pi package skeleton, project-specific validation guardrails, a frozen Pi extension/package contract, the finalized `codex_web_search` tool API contract, a safe `codex exec` argv builder, a bounded Codex subprocess runner, a JSONL parser for `codex exec --json` stdout, a bounded formatter for Pi tool output, Pi tool registration wiring, a small optional Pi slash-command help surface, safe configuration handling, a fake-Codex integration test harness, a manual real-Codex validation guide, user-facing installation/package documentation, a security threat model, expanded troubleshooting guidance, release/package-content validation, a GitHub Actions quality workflow, a docs-only local Pi project fixture, and an opt-in real-Codex smoke script for authenticated human validation.
 
-Ticket 018 added in this cycle:
+Ticket 019 added in this cycle:
 
-* added `docs/EXAMPLE_LOCAL_PI_PROJECT.md`, a docs-only throwaway local Pi project fixture showing a sample workspace tree, project-local `pi install -l` command, expected `.pi/settings.json` package entry, `/codex-web-search` help check, sample user prompt, and expected `codex_web_search` invocation behavior
-* documented that the fixture is not a real checked-in `.pi/` project and that automated tests must not run Pi, Codex, live web search, or network calls from the example
-* linked the fixture from README, `docs/INSTALLATION.md`, `docs/USAGE.md`, and `docs/MANUAL_VALIDATION.md`
-* updated package-content validation so the new fixture doc is required in npm dry-run contents
-* added automated documentation-shape coverage that reads the fixture and verifies the expected package-loading, prompt, invocation, and no-real-external-calls wording without executing Pi or Codex
+* added `scripts/smoke-real-codex-search.mjs`, a manual Node.js smoke script that checks `codex --version` and then runs a harmless `codex exec --search --skip-git-repo-check --sandbox read-only -- <query>` request using `spawn` with `shell: false`
+* exposed the script through `npm run smoke:codex` while keeping it out of `scripts/quality-gate.sh`, GitHub Actions, and the default automated test path
+* made the script fail fast for missing/unstartable Codex, non-zero exits, timeouts, oversized output, empty successful stdout, and invalid smoke timeout/binary environment values without reading Codex credential files
+* kept the script from writing log files; it prints only a bounded stdout preview on success and intentionally omits raw stderr/stdout from failed real-Codex runs
+* documented when and how to run the script in README, `docs/MANUAL_VALIDATION.md`, `docs/TROUBLESHOOTING.md`, `docs/QUALITY_GATE.md`, `docs/SECURITY.md`, and `docs/RELEASE.md`
+* added static automated coverage in `test/package-shape.test.mjs` to verify the smoke script exists, is wired to `npm run smoke:codex`, uses the reviewed read-only/search shape, and is not referenced by the quality-gate script
 
-No Codex live search, authenticated Codex run, real Codex CLI execution, Codex credential access, browser automation, or network research was used in this cycle. The ticket was focused on a documentation-only example fixture and automated checks that only read repository files.
+No Codex live search, authenticated Codex run, real Codex CLI execution, Codex credential access, browser automation, or network research was used in this cycle. The new smoke script was syntax-checked locally with `node --check`, but it was not executed against a real Codex binary.
 
 ## Quality gates
 
-Ran `scripts/quality-gate.sh` successfully after implementing Ticket 018.
+Ran `scripts/quality-gate.sh` successfully after implementing Ticket 019.
 
 The passing gate performed:
 
@@ -26,27 +27,31 @@ The passing gate performed:
 * `npm ci`
 * `npm run lint --if-present`
 * `npm run typecheck --if-present`
-* `npm test --if-present` with 62 passing tests, including the new docs-only local Pi project fixture coverage
+* `npm test --if-present` with 63 passing tests, including the new static coverage for the opt-in smoke script
 * `npm run build --if-present`
-* `npm run pack:check`, which ran the package-content validator and confirmed the npm dry-run would ship the intended 23 runtime/docs files including `docs/EXAMPLE_LOCAL_PI_PROJECT.md`
+* `npm run pack:check`, which ran the package-content validator and confirmed the npm dry-run would ship the intended 23 runtime/docs files
 * cleanup of `node_modules/` created by the gate
 * generated/private-file guardrail after cleanup
 
-The validated package dry-run now includes only the intended `package.json`, `README.md`, `docs/`, `extensions/`, and `src/` contents. The new local Pi project fixture is Markdown under `docs/`; no real `.pi/` directory, package cache, session files, logs, test fixtures, shell scripts, autonomous build notes, dependency directories, generated output, package tarballs, or private/auth files are included in the npm dry-run contents.
+The quality gate intentionally did not run `npm run smoke:codex`, did not install or authenticate real Codex, and did not perform live web search. The validated package dry-run still includes only the intended `package.json`, `README.md`, `docs/`, `extensions/`, and `src/` contents. Repository scripts, including the new smoke script, remain outside the npm package contents by policy.
 
 ## Known blockers and limitations
 
 None for automated quality validation.
 
+The opt-in smoke script is manual-only and repository-checkout-only. It is intentionally not part of the default quality gate, not run by CI, and not included in the npm package contents. It verifies that a human's local Codex CLI can start and perform one harmless read-only web-search request, but it does not prove that a real Pi installation can load the package, that a model will choose the tool, or that every future Codex JSONL schema will parse correctly.
+
+The smoke script does not inspect `~/.codex/auth.json` or any other credential file. It can only infer unauthenticated, disabled-search, account-limit, or network problems from `codex exec` failing. Raw stderr/stdout from failed real-Codex runs is intentionally omitted, so deeper troubleshooting may require a human to run direct Codex commands privately and sanitize any notes before sharing.
+
 The local Pi project fixture is documentation only. It does not prove that a real Pi installation can load the package, that a model will choose the tool, or that real Codex web search works on a user's machine. Manual real-Codex/Pi validation still requires a human machine with Pi installed, Codex CLI installed, `codex login` completed, a Pi model/provider configured, and network access.
 
-GitHub Actions CI runs the local quality gate on hosted Ubuntu with Node.js 20.x, but it intentionally does not install Pi, install or authenticate Codex, run `codex login`, perform live web search, publish to npm, or validate account-specific Codex behaviour.
+GitHub Actions CI runs the local quality gate on hosted Ubuntu with Node.js 20.x, but it intentionally does not install Pi, install or authenticate Codex, run `codex login`, run `npm run smoke:codex`, perform live web search, publish to npm, or validate account-specific Codex behaviour.
 
 The package is not documented as published to npm yet. The npm-style Pi commands are the intended source syntax once `pi-codex-web-search` is published under the expected name/version; local path and git source loading are documented for current validation. Package dry-run validation does not publish, sign, or upload the package.
 
 The package-content validator intentionally mirrors the current narrow `files` allowlist and required docs/runtime files. If future tickets intentionally add packaged runtime files or rename documentation, `scripts/check-package-contents.mjs` must be updated with the package strategy change.
 
-The troubleshooting guide documents native Windows/path concerns, but native Windows has not been fully validated. Because the runner uses `execFile` with `shell: false`, shell aliases and some npm `.cmd` shims may not behave like they do in an interactive shell; WSL/Linux/macOS remain the recommended validation path for now.
+The troubleshooting guide documents native Windows/path concerns, but native Windows has not been fully validated. Because the runner and the smoke script use non-shell subprocess APIs with `shell: false`, shell aliases and some npm `.cmd` shims may not behave like they do in an interactive shell; WSL/Linux/macOS remain the recommended validation path for now.
 
 Codex is still an external executable. A malicious `codex` binary, unsafe `PATH`, or unsafe `PI_CODEX_WEB_SEARCH_CODEX_BINARY` override can execute as the local user. Users should point overrides only at trusted Codex executables.
 
@@ -74,4 +79,4 @@ The `/codex-web-search` command uses Pi's UI notification surface when available
 
 ## Next recommended ticket
 
-Ticket 019 — Add opt-in real-Codex smoke script.
+Ticket 020 — Add polish pass for developer ergonomics.

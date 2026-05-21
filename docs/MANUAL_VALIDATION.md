@@ -42,23 +42,43 @@ codex login
 
 Follow the CLI prompts. Do not inspect or share Codex credential files; authentication storage is owned by Codex, not this extension.
 
-## 2. Run a direct Codex web-search smoke test
+## 2. Run the opt-in Codex web-search smoke test
 
-Before loading Pi, confirm that Codex itself can perform a harmless live web search:
+Before loading Pi, confirm that Codex itself can perform a harmless live web search. From the repository root, run the manual smoke script:
 
 ```bash
-codex exec --search --skip-git-repo-check --sandbox read-only "Search the web for the current UTC date. Return one sentence and one public source URL."
+npm run smoke:codex
 ```
 
-Expected shape:
+Equivalent direct invocation:
+
+```bash
+node scripts/smoke-real-codex-search.mjs
+```
+
+The script is **not part of the automated quality gate** and must be run only by a human who has installed and authenticated Codex. It checks `codex --version`, then runs this reviewed read-only shape with an argv array and `shell: false`:
 
 ```text
+codex exec --search --skip-git-repo-check --sandbox read-only -- <harmless query>
+```
+
+The harmless query asks for the current UTC date in one sentence with one public source URL. The script uses `PI_CODEX_WEB_SEARCH_CODEX_BINARY` if you need a trusted non-default Codex executable path and `PI_CODEX_WEB_SEARCH_TIMEOUT_MS` if you need a longer timeout. It does not inspect `~/.codex/auth.json`, does not write log files, and omits raw stderr/stdout from failed Codex runs to avoid leaking account, prompt, or path details.
+
+Expected success shape:
+
+```text
+Codex real web-search smoke test passed.
+Bounded stdout preview:
 The current UTC date is <date>. Source: https://...
 ```
 
 The exact wording and source will vary. A successful result should show that `codex exec` ran, `--search` was accepted, and Codex returned a concise answer with a public source URL.
 
-If this command fails, fix Codex before testing the Pi extension; the extension delegates authentication and live web-search capability to the local Codex CLI.
+If the smoke script fails, fix Codex before testing the Pi extension; the extension delegates authentication and live web-search capability to the local Codex CLI. For private local troubleshooting, you may run the direct command yourself, but do not commit the terminal output:
+
+```bash
+codex exec --search --skip-git-repo-check --sandbox read-only -- "Search the web for the current UTC date. Return one sentence and one public source URL."
+```
 
 ## 3. Prepare the package checkout
 
@@ -203,7 +223,7 @@ pi -e /path/to/pi-codex-web-search
 
 Symptoms:
 
-* The direct `codex exec --search ...` smoke test asks you to log in or exits with an authentication error.
+* The opt-in smoke script or direct `codex exec --search ...` test asks you to log in or exits with an authentication error.
 * Pi tool output says `Codex web search failed (codex_nonzero_exit).`
 
 Fix:
@@ -212,13 +232,13 @@ Fix:
 codex login
 ```
 
-Then rerun the direct Codex smoke test before retrying in Pi. Do not copy, inspect, paste, or share `~/.codex/auth.json` while troubleshooting.
+Then rerun `npm run smoke:codex` from the checkout, or the direct Codex smoke test, before retrying in Pi. Do not copy, inspect, paste, or share `~/.codex/auth.json` while troubleshooting.
 
 ### Web search is disabled or cached/live mode is confused
 
 Symptoms:
 
-* Direct Codex smoke test reports that web search is unavailable.
+* The opt-in smoke script or direct Codex smoke test reports that web search is unavailable.
 * Pi answers without fresh sources when you expected live search.
 * You see no indication that `--search` was used.
 
@@ -239,7 +259,7 @@ Symptoms:
 
 Checks and fixes:
 
-* Retry the direct `codex exec --search ...` command from the same terminal.
+* Retry `npm run smoke:codex` from the checkout, or the direct `codex exec --search ...` command from the same terminal.
 * Check local network, VPN, proxy, and firewall settings.
 * If your shell needs proxy variables, export them before launching Pi so the Codex subprocess inherits them.
 * Retry with a narrower query after network connectivity is restored.
@@ -275,7 +295,7 @@ Node version:
 Pi version:
 Codex version:
 Package commit:
-Direct codex exec --search smoke test: PASS / FAIL
+Opt-in Codex smoke script/direct search test: PASS / FAIL
 Pi package loaded with pi -e or pi install -l: PASS / FAIL
 /codex-web-search help displayed: PASS / FAIL
 codex_web_search live-mode tool call completed: PASS / FAIL
