@@ -2,15 +2,16 @@
 
 `pi-codex-web-search` is a TypeScript Pi package scaffold for a future `codex_web_search` tool. The package is intended to let Pi call the local Codex CLI for web-enabled answers while relying on the user's existing Codex/ChatGPT authentication.
 
-> Status: build in progress. The current package exposes a safe, no-op placeholder extension entrypoint plus the typed/validated `codex_web_search` API contract. It does **not** call Codex or register the final tool yet.
+> Status: build in progress. The current package exposes a safe, no-op placeholder extension entrypoint, the typed/validated `codex_web_search` API contract, and a safe `codex exec` argv builder. It does **not** spawn Codex or register the final Pi tool yet.
 
 ## Current package shape
 
 ```text
 package.json                         # npm metadata plus the pi.extensions manifest
 extensions/codex-web-search.ts       # placeholder Pi extension entrypoint
-src/index.ts                         # shared package metadata and exported API contract
+src/index.ts                         # shared package metadata and exported API/argv contracts
 src/tool/codexWebSearchApi.ts        # codex_web_search input/result types and validation
+src/codex/buildCodexArgs.ts          # safe codex exec argv construction
 test/package-shape.test.mjs          # smoke tests for the package skeleton
 docs/                                # design, security, usage, validation, and quality-gate notes
 scripts/quality-gate.sh              # local validation gate used by the build loop
@@ -58,11 +59,20 @@ Later tickets will replace the placeholder with a Pi tool named `codex_web_searc
 * defaults `mode` to `live`, read-only Codex sandbox, JSONL output, 120s timeout, 2 MiB subprocess buffer, and 12k formatted output chars
 * executes `codex exec` with argv arrays, never shell-interpolated strings
 * uses Codex `--search` only when normalized mode is `live`
+* passes the prompt after an end-of-options `--` separator so prompt text stays positional even when it starts with dashes
 * bounds time, stdout, stderr, and returned Pi tool content
 * parses or formats Codex output into concise Pi tool results
 
 ## Safety notes
 
 This project must never read, copy, log, or commit Codex credentials such as `~/.codex/auth.json`. Authentication remains the Codex CLI's responsibility.
+
+The current argv builder returns arguments for a later `execFile("codex", args)` or `spawn("codex", args)` call. Its default live-search shape is:
+
+```text
+["exec", "--json", "--search", "--skip-git-repo-check", "--sandbox", "read-only", "--", query]
+```
+
+`mode: "cached"` omits `--search`; `skipGitRepoCheck: false` omits `--skip-git-repo-check`. The only currently allowed sandbox value is `read-only`.
 
 Automated tests must use mocks or fake executables. Real Codex validation belongs in `docs/MANUAL_VALIDATION.md` and requires a local user who has installed Codex and run `codex login`.

@@ -103,7 +103,7 @@ Commit when complete.
 
 ## 004 — Implement safe Codex argv builder
 
-Status: TODO
+Status: DONE
 
 Build the function that turns validated tool input into a safe `codex exec` argv array.
 

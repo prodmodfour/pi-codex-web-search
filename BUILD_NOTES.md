@@ -2,24 +2,27 @@
 
 ## Current state
 
-Tickets 000, 001, 002, and 003 are complete. The repository has a TypeScript/npm Pi package skeleton, project-specific validation guardrails, a frozen Pi extension/package contract, and the finalized `codex_web_search` tool API contract.
+Tickets 000, 001, 002, 003, and 004 are complete. The repository has a TypeScript/npm Pi package skeleton, project-specific validation guardrails, a frozen Pi extension/package contract, the finalized `codex_web_search` tool API contract, and a safe `codex exec` argv builder.
 
-Ticket 003 added in this cycle:
+Ticket 004 added in this cycle:
 
-* created `src/tool/codexWebSearchApi.ts` with tool input types, normalized execution input, normalized success/failure result types, reserved failure codes, defaults, limits, and validation helpers
-* exported the new API contract and validation functions from `src/index.ts`
-* set the tool-call defaults to live mode, read-only sandbox, JSONL output, `--skip-git-repo-check` intent, 120s timeout, 2 MiB subprocess buffer, 12k formatted output chars, and `includeRawEvents: false`
-* added validation for required trimmed `query`, `mode`, `timeoutMs`, `maxOutputChars`, `includeRawEvents`, unknown properties, and safe error messages that do not echo query values
-* added `test/codex-web-search-api.test.mjs` plus a small TypeScript test loader helper so Node's built-in test runner can exercise the TypeScript validation module without calling real Codex
-* updated README, `docs/EXTENSION_SPEC.md`, `docs/ARCHITECTURE.md`, and `docs/SECURITY.md` with the finalized API parameters, defaults, return shape, and failure modes
+* created `src/codex/buildCodexArgs.ts` with `buildCodexExecArgs`, sandbox/output allowlists, and `CodexArgvBuilderError`
+* exported the argv-builder contract from `src/index.ts`
+* implemented the current live-search argv shape as `["exec", "--json", "--search", "--skip-git-repo-check", "--sandbox", "read-only", "--", query]`
+* ensured `--search` is emitted only for normalized `mode: "live"` and `--skip-git-repo-check` is emitted only when the normalized boolean is true
+* kept the query as one final argv element after an end-of-options `--` separator so shell metacharacters and leading dashes are not interpreted as shell syntax or Codex flags by the builder
+* restricted the current sandbox allowlist to `read-only`; unsafe values such as write-capable Codex sandboxes are rejected until a future ticket deliberately expands policy
+* added runtime guardrails for malformed normalized input, unsupported output formats, inconsistent `mode`/`liveSearch`, non-boolean skip flags, empty query, and null bytes without echoing query text in builder errors
+* added `test/build-codex-args.test.mjs` covering live/cached and skip-git combinations, shell-metacharacter prompt handling, allowlists, and malformed-input failures
+* updated README, `docs/EXTENSION_SPEC.md`, `docs/ARCHITECTURE.md`, and `docs/SECURITY.md` to document the argv-builder boundary and current sandbox policy
 
-The placeholder extension still intentionally does not call Codex or register `codex_web_search`; later tickets own argv construction, the subprocess runner, JSONL parser, formatter, and final Pi registration.
+The placeholder extension still intentionally does not call Codex or register `codex_web_search`; later tickets own the subprocess runner, JSONL parser, formatter, and final Pi registration.
 
-No Codex live search, real Codex CLI invocation, or Codex authentication was used.
+No Codex live search, authenticated Codex run, or Codex task execution was used. The local `codex exec --help` output was consulted once after implementation to confirm the documented `exec`, `--json`, `--skip-git-repo-check`, and sandbox flag shapes; no prompts were sent to Codex.
 
 ## Quality gates
 
-Ran `scripts/quality-gate.sh` successfully after fixing the TypeScript test loader.
+Ran `scripts/quality-gate.sh` successfully after implementing Ticket 004.
 
 The passing gate performed:
 
@@ -29,13 +32,13 @@ The passing gate performed:
 * `npm ci`
 * `npm run lint --if-present`
 * `npm run typecheck --if-present`
-* `npm test --if-present`
+* `npm test --if-present` with 17 passing tests
 * `npm run build --if-present`
 * `npm run pack:check`
 * cleanup of `node_modules/` created by the gate
 * generated/private-file guardrail after cleanup
 
-The npm package dry-run included the intended package files from `files`: README, docs, extension source, package metadata, Pi contract source, and the new tool API source. `node_modules/` was removed by the gate before exit.
+The npm package dry-run included the intended package files from `files`: README, docs, extension source, package metadata, Pi contract source, tool API source, and the new Codex argv-builder source. `node_modules/` was removed by the gate before exit.
 
 ## Known blockers and limitations
 
@@ -43,7 +46,7 @@ None for automated quality validation.
 
 The local Pi contract in `src/pi/piExtensionContract.ts` is intentionally narrow and mirrors only the subset frozen in `docs/EXTENSION_SPEC.md`. It should be replaced or reconciled explicitly if a future ticket imports official Pi runtime types or TypeBox schemas directly.
 
-The new API module performs validation only. It does not build Codex argv, spawn Codex, parse JSONL, format Pi results, register the Pi tool, or read any user configuration yet.
+The API and argv builder still do not spawn Codex, parse JSONL, format Pi results, register the Pi tool, or read user configuration. The current sandbox allowlist is intentionally limited to `read-only`; future configuration work must explicitly validate and document any override.
 
 Manual real-Codex validation will require a machine with:
 
@@ -53,4 +56,4 @@ Manual real-Codex validation will require a machine with:
 
 ## Next recommended ticket
 
-Ticket 004 — Implement safe Codex argv builder.
+Ticket 005 — Implement Codex subprocess runner.

@@ -28,6 +28,18 @@ subprocess call. It trims and bounds `query`, rejects unknown parameters, bounds
 `timeoutMs` and `maxOutputChars`, and does not echo the query value in validation
 error messages.
 
+Ticket 004 adds safe argv construction before any subprocess execution:
+
+* `buildCodexExecArgs` returns only the Codex argument array; it does not return
+  a shell command string or spawn a process
+* the prompt is the final argv element after an end-of-options `--` separator
+* `--search` is emitted only for normalized `mode: "live"`
+* `--skip-git-repo-check` is emitted only from the normalized boolean option
+* the current sandbox allowlist contains only `read-only`; write-capable Codex
+  sandboxes are rejected until a future ticket deliberately expands the policy
+* null bytes, unsupported output formats, and inconsistent normalized inputs are
+  rejected without echoing the query in error messages
+
 Required for later subprocess tickets:
 
 * use `execFile` or `spawn` with argv arrays

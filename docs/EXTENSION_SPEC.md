@@ -3,9 +3,10 @@
 ## Scope
 
 This document freezes the Pi extension/package contract that this package targets.
-It also freezes the Ticket 003 `codex_web_search` tool API. It does **not**
-implement Codex execution; later tickets own argv construction, subprocess
-execution, JSONL parsing, result formatting, and final Pi registration.
+It also freezes the Ticket 003 `codex_web_search` tool API and the Ticket 004
+safe `codex exec` argv-builder contract. It does **not** implement Codex
+subprocess execution; later tickets own process execution, JSONL parsing, result
+formatting, and final Pi registration.
 
 ## Research basis
 
@@ -284,23 +285,49 @@ The API reserves these failure codes for later tickets:
 Validation errors use structured issue codes and messages that do not echo the
 query value.
 
-## Future Codex command shape
+## Safe Codex argv-builder contract
 
-Later tickets will implement safe argv construction and subprocess execution.
-The expected live-search argv shape remains:
+Ticket 004 implements `src/codex/buildCodexArgs.ts`. It exports
+`buildCodexExecArgs(input)`, which accepts a `NormalizedCodexWebSearchInput` and
+returns the arguments for the Codex executable. The returned array excludes the
+binary name so a later runner can use a non-shell API such as:
 
-```bash
-codex exec --json --search --skip-git-repo-check --sandbox read-only "<prompt>"
+```ts
+execFile("codex", buildCodexExecArgs(input), options);
 ```
 
-The important frozen safety constraint is that user input must become an argv
+The default live-search argv shape is:
+
+```text
+["exec", "--json", "--search", "--skip-git-repo-check", "--sandbox", "read-only", "--", "<prompt>"]
+```
+
+The equivalent command-line display is:
+
+```bash
+codex exec --json --search --skip-git-repo-check --sandbox read-only -- "<prompt>"
+```
+
+Builder rules:
+
+* always emit `exec` and `--json` for the currently supported JSONL path;
+* emit `--search` only when normalized `mode` is `"live"`;
+* emit `--skip-git-repo-check` when normalized `codex.skipGitRepoCheck` is true;
+* always emit `--sandbox read-only` under the current safe sandbox allowlist;
+* place the prompt after an end-of-options `--` separator so prompt text remains
+  a positional argument even if it starts with dashes;
+* reject unsupported output formats, unsafe sandbox overrides, inconsistent
+  `mode`/`liveSearch` pairs, non-boolean `skipGitRepoCheck`, empty queries, and
+  null bytes before a subprocess runner sees the argv.
+
+The important frozen safety constraint is that user input must become one argv
 array element, never a shell-interpolated command string.
 
 ## Safety requirements
 
-* no Codex execution in this ticket;
+* safe argv construction only; Codex subprocess execution remains a later ticket;
 * no shell command construction from query input;
 * no reading, copying, or logging Codex credentials;
-* no default write sandbox;
+* no default write sandbox and no write-capable sandbox allowlist in Ticket 004;
 * bounded output in future runner/formatter tickets;
 * automated tests must not invoke real Codex by default.

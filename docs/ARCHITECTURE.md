@@ -18,12 +18,25 @@ Pi extension entrypoint
 extensions/codex-web-search.ts
 src/pi/piExtensionContract.ts          # current local contract/test subset
 src/tool/codexWebSearchApi.ts          # tool input/result types and validation
+src/codex/buildCodexArgs.ts            # safe codex exec argv construction
 src/pi/registerCodexWebSearchTool.ts   # future registration module
-src/codex/buildCodexArgs.ts
 src/codex/CodexRunner.ts
 src/codex/CodexJsonlParser.ts
 src/output/formatToolResult.ts
 ```
+
+## Implemented argv-building boundary
+
+`src/codex/buildCodexArgs.ts` is the boundary between validated tool input and a
+future subprocess runner. It returns arguments for the Codex executable, not a
+shell command string and not the binary path. The current live-search shape is:
+
+```text
+["exec", "--json", "--search", "--skip-git-repo-check", "--sandbox", "read-only", "--", query]
+```
+
+The prompt is always the final argv element after `--`. `mode: "cached"` omits
+`--search`, and the current sandbox allowlist contains only `read-only`.
 
 ## Test strategy
 
