@@ -25,6 +25,20 @@ npm --version
 pi --version
 ```
 
+## Final validation checklist
+
+A human validator should run and record these items locally. Keep any notes private when they include account details, private prompts, local paths, or Codex diagnostics.
+
+- [ ] From the repository root, run `scripts/quality-gate.sh` and confirm it passes without requiring Pi, real Codex authentication, or live web search.
+- [ ] Confirm the local runtime tools: `node --version`, `npm --version`, `pi --version`, and `codex --version`.
+- [ ] Install/authenticate Codex if needed with `npm install -g @openai/codex` and `codex login`; do not inspect or share `~/.codex/auth.json`.
+- [ ] Run the opt-in authenticated smoke test: `npm run smoke:codex`.
+- [ ] Load the package in Pi with `pi -e .` from the checkout, or `pi install -l /path/to/pi-codex-web-search` from a throwaway Pi project.
+- [ ] In Pi, run `/codex-web-search` and confirm the static help appears without executing Codex.
+- [ ] Ask Pi to call `codex_web_search` in `live` mode and confirm the result is concise and includes public source URLs when Codex provides them.
+- [ ] Optionally ask for `mode: "cached"` and confirm the extension omits Codex `--search` for that call.
+- [ ] Copy the sanitized pass/fail summary into the validation record template at the end of this guide; do not commit raw terminal logs.
+
 ## 1. Install and authenticate Codex
 
 Install the Codex CLI if it is not already available:
@@ -292,13 +306,16 @@ Use this checklist for local notes. Keep the notes private if they include accou
 Date:
 OS / shell:
 Node version:
+npm version:
 Pi version:
 Codex version:
 Package commit:
+Automated quality gate (`scripts/quality-gate.sh`): PASS / FAIL
 Opt-in Codex smoke script/direct search test: PASS / FAIL
 Pi package loaded with pi -e or pi install -l: PASS / FAIL
 /codex-web-search help displayed: PASS / FAIL
 codex_web_search live-mode tool call completed: PASS / FAIL
 Sources shown in tool result: YES / NO
+Optional cached-mode check: PASS / FAIL / SKIPPED
 Troubleshooting notes, sanitized:
 ```

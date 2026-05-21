@@ -485,7 +485,7 @@ Commit when complete.
 
 ## 021 — Final real-world manual validation checkpoint
 
-Status: TODO
+Status: DONE
 
 Prepare the repo for a human to perform final real-Codex/Pi validation.
 

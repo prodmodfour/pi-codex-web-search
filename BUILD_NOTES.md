@@ -2,25 +2,19 @@
 
 ## Current state
 
-Tickets 000 through 020 are complete. The repository now has a TypeScript/npm Pi package skeleton, project-specific validation guardrails, a frozen Pi extension/package contract, the finalized `codex_web_search` tool API contract, a safe `codex exec` argv builder, a bounded Codex subprocess runner, a JSONL parser for `codex exec --json` stdout, a bounded formatter for Pi tool output, Pi tool registration wiring, a small optional Pi slash-command help surface, safe configuration handling, a fake-Codex integration test harness, a manual real-Codex validation guide, user-facing installation/package documentation, a security threat model, expanded troubleshooting guidance, release/package-content validation, a GitHub Actions quality workflow, a docs-only local Pi project fixture, an opt-in real-Codex smoke script for authenticated human validation, and a developer-ergonomics polish pass.
+Tickets 000 through 021 are complete. The repository now has a TypeScript/npm Pi package skeleton, project-specific validation guardrails, a frozen Pi extension/package contract, the finalized `codex_web_search` tool API contract, a safe `codex exec` argv builder, a bounded Codex subprocess runner, a JSONL parser for `codex exec --json` stdout, a bounded formatter for Pi tool output, Pi tool registration wiring, a small optional Pi slash-command help surface, safe configuration handling, a fake-Codex integration test harness, a manual real-Codex validation guide, user-facing installation/package documentation, a security threat model, expanded troubleshooting guidance, release/package-content validation, a GitHub Actions quality workflow, a docs-only local Pi project fixture, an opt-in real-Codex smoke script for authenticated human validation, a developer-ergonomics polish pass, and a final human-validation checkpoint.
 
-Ticket 020 added in this cycle:
+Ticket 021 added in this cycle:
 
-* tightened TypeScript project checks with `noUnusedLocals` and `noUnusedParameters` so future dead code and unused parameters are caught by both `npm run lint` and `npm run typecheck`
-* removed a redundant JSONL parser type cast/import, renamed the registration-layer config-default helper to `createInputDefaultsFromConfig(...)`, and gave that helper an explicit return type
-* refreshed code comments and architecture wording to use public API/safety terminology rather than implementation-ticket labels where the latter was no longer helpful
-* aligned Codex binary validation terminology across code and docs: configured binary values are trimmed, must be non-empty after trimming, and must not contain null bytes
-* made the opt-in real-Codex smoke script trim `PI_CODEX_WEB_SEARCH_CODEX_BINARY` before validation/spawn so its validation matches the package configuration layer more closely
-* extended the existing static package-shape test to cover the smoke script's trimmed-binary validation without executing real Codex
-* polished README and architecture module lists and removed stale package-skeleton wording from README
+* reviewed the manual real-Codex/Pi validation path for completeness against the ticket requirements
+* added a `Final validation checklist` to `docs/MANUAL_VALIDATION.md` that tells a human validator exactly what to run locally: the no-real-Codex quality gate, runtime version checks, Codex install/login, the opt-in smoke script, Pi package loading, `/codex-web-search` help, a live-mode tool call, and the optional cached-mode comparison
+* expanded the validation record template with npm version, automated quality-gate status, and optional cached-mode status so human pass/fail notes are easier to capture without committing raw logs
 
-No Codex live search, authenticated Codex run, real Codex CLI execution, Codex credential access, browser automation, or network research was used in this cycle. The real-Codex smoke script was syntax-checked with `node --check` but was not executed against a real Codex binary.
+No Codex live search, authenticated Codex run, real Codex CLI execution, Codex credential access, browser automation, or network research was used in this cycle. The autonomous agent cannot safely complete real-Codex/Pi validation from this environment because it requires a human's local Pi/Codex setup, authentication state, network access, and may consume Codex/ChatGPT plan limits. This external manual validation requirement is documented and is not treated as a blocker for automated ticket completion.
 
 ## Quality gates
 
-Ran `node --check scripts/smoke-real-codex-search.mjs` successfully after updating the opt-in smoke script.
-
-Ran `scripts/quality-gate.sh` successfully after implementing Ticket 020.
+Ran `scripts/quality-gate.sh` successfully after implementing Ticket 021.
 
 The passing gate performed:
 
@@ -28,7 +22,7 @@ The passing gate performed:
 * secret guardrail through `scripts/check-no-secrets.sh`
 * generated/private-file guardrail before Node checks
 * `npm ci`
-* `npm run lint --if-present`, now using TypeScript strict checks plus unused-code checks
+* `npm run lint --if-present`, using TypeScript strict checks plus unused-code checks
 * `npm run typecheck --if-present`, using the same TypeScript project check
 * `npm test --if-present` with 63 passing tests
 * `npm run build --if-present`
@@ -36,7 +30,7 @@ The passing gate performed:
 * cleanup of `node_modules/` created by the gate
 * generated/private-file guardrail after cleanup
 
-The quality gate intentionally did not run `npm run smoke:codex`, did not install or authenticate real Codex, and did not perform live web search. The validated package dry-run still includes only the intended `package.json`, `README.md`, `docs/`, `extensions/`, and `src/` contents. Repository scripts, including the opt-in smoke script, remain outside the npm package contents by policy.
+The quality gate intentionally did not run `npm run smoke:codex`, did not install or authenticate real Codex, did not launch Pi, and did not perform live web search. The validated package dry-run still includes only the intended `package.json`, `README.md`, `docs/`, `extensions/`, and `src/` contents. Repository scripts, including the opt-in smoke script, remain outside the npm package contents by policy.
 
 ## Known blockers and limitations
 
@@ -68,4 +62,4 @@ The configured sandbox setting currently accepts only `read-only`. This is delib
 
 ## Next recommended ticket
 
-Ticket 021 — Final real-world manual validation checkpoint.
+Ticket 099 — Final autonomous review and completion marker.
