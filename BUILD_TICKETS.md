@@ -354,7 +354,7 @@ Commit when complete.
 
 ## 015 — Add troubleshooting docs
 
-Status: TODO
+Status: DONE
 
 Create troubleshooting guidance for users and maintainers.
 
