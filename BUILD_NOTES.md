@@ -2,20 +2,19 @@
 
 ## Current state
 
-Ticket 000 is complete. The repository now has a TypeScript/npm Pi package skeleton for `pi-codex-web-search`.
+Tickets 000 and 001 are complete. The repository has a TypeScript/npm Pi package skeleton for `pi-codex-web-search` plus project-specific local validation guardrails.
 
-Added in this cycle:
+Ticket 001 added in this cycle:
 
-* `package.json` with Node 20+ metadata, npm scripts, dev dependencies, and `pi.extensions` pointing at `./extensions/codex-web-search.ts`
-* `package-lock.json`
-* `tsconfig.json` for strict NodeNext TypeScript type-checking without emitted build artifacts
-* `extensions/codex-web-search.ts` as a safe no-op placeholder extension entrypoint
-* `src/index.ts` with initial package metadata constants
-* `test/package-shape.test.mjs` smoke tests for package manifest shape
-* expanded `.gitignore` for Node, Pi runtime artifacts, Codex auth paths, and autonomous-agent logs
-* README updated to describe the current package shape and placeholder status
+* `scripts/check-shell-syntax.sh` for reusable `bash -n` validation of repository shell scripts
+* strengthened `scripts/quality-gate.sh` orchestration for shell checks, secret guardrails, generated/private-file guardrails, npm install/CI, lint, typecheck, tests, build, package dry-run, cleanup, and a post-check artifact guardrail
+* strengthened `scripts/check-no-generated-private-files.sh` checks for real env files, Codex auth artifacts, generated dependency/build/coverage directories, npm tarballs, and tracked generated/private paths
+* npm convenience scripts: `quality`, `check:shell`, `guard:secrets`, and `guard:generated`
+* `docs/QUALITY_GATE.md` documenting the gate checks, npm script map, cleanup behavior, and limitations
+* README updates pointing developers at the quality-gate documentation
+* package-shape test coverage for the quality-related npm scripts
 
-The placeholder extension intentionally does not call Codex or register `codex_web_search`; later tickets own the API, runner, parser, formatter, and final tool registration.
+The placeholder extension still intentionally does not call Codex or register `codex_web_search`; later tickets own the Pi extension contract, tool API, runner, parser, formatter, and final registration.
 
 ## Quality gates
 
@@ -23,27 +22,25 @@ Ran `scripts/quality-gate.sh` successfully.
 
 The gate performed:
 
-* shell syntax checks
-* secret guardrail
-* generated/private-file guardrail
-* `npm ci` (after the initial `npm install` generated `package-lock.json`)
+* shell syntax checks through `scripts/check-shell-syntax.sh`
+* secret guardrail through `scripts/check-no-secrets.sh`
+* generated/private-file guardrail before Node checks
+* `npm ci`
 * `npm run lint --if-present`
 * `npm run typecheck --if-present`
 * `npm test --if-present`
 * `npm run build --if-present`
 * `npm run pack:check`
+* cleanup of `node_modules/` created by the gate
+* generated/private-file guardrail after cleanup
 
-After the gate, `node_modules/` was removed locally so the repository remains clean and the generated/private-file guardrail will not fail at the start of the next cycle.
-
-## Latest cycle notes
-
-The npm package dry-run included only the intended package files from `files`: README, docs, extension source, package metadata, and `src` metadata.
+The npm package dry-run included the intended package files from `files`: README, docs, extension source, package metadata, and `src` metadata. `node_modules/` was removed by the gate before exit.
 
 No real Codex invocation or authentication was used.
 
 ## Known blockers
 
-None for automated build setup.
+None for automated quality validation.
 
 Manual real-Codex validation will require a machine with:
 
@@ -53,4 +50,4 @@ Manual real-Codex validation will require a machine with:
 
 ## Next recommended ticket
 
-Ticket 001 — Add project-specific quality and guardrail scripts.
+Ticket 002 — Research and freeze current Pi extension contract.

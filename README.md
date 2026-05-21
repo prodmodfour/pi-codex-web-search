@@ -11,7 +11,7 @@ package.json                         # npm metadata plus the pi.extensions manif
 extensions/codex-web-search.ts       # placeholder Pi extension entrypoint
 src/index.ts                         # shared package metadata constants
 test/package-shape.test.mjs          # smoke tests for the package skeleton
-docs/                                # design, security, usage, and validation notes
+docs/                                # design, security, usage, validation, and quality-gate notes
 scripts/quality-gate.sh              # local validation gate used by the build loop
 ```
 
@@ -42,7 +42,11 @@ Run the repository quality gate before committing changes:
 
 ```bash
 scripts/quality-gate.sh
+# or
+npm run quality
 ```
+
+The gate runs shell syntax checks, secret and generated-file guardrails, npm validation scripts, and a package dry-run. See [`docs/QUALITY_GATE.md`](docs/QUALITY_GATE.md) for the full checklist.
 
 ## Intended final behavior
 

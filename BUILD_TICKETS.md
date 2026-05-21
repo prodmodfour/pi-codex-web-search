@@ -38,7 +38,7 @@ Commit when complete.
 
 ## 001 — Add project-specific quality and guardrail scripts
 
-Status: TODO
+Status: DONE
 
 Strengthen local validation before core code is built.
 
