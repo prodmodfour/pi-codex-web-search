@@ -4,7 +4,7 @@
 
 When Codex is authenticated with a ChatGPT/Codex account, live searches made through this extension may consume that account's Codex/ChatGPT plan limits. They do not use OpenAI API web-search billing by default, and this package cannot bypass Codex, ChatGPT, account, or network limits.
 
-> Status: build in progress. The current package registers `codex_web_search` plus a `/codex-web-search` help command, validates tool parameters and safe configuration, runs the bounded Codex subprocess pipeline, parses `codex exec --json` output, formats concise Pi tool results, covers the path with a fake-Codex executable integration harness, and documents installation plus manual real-Codex validation.
+> Status: autonomous build complete. Automated quality gates pass without real Codex authentication; real Codex/Pi validation remains an opt-in human checklist in [`docs/MANUAL_VALIDATION.md`](docs/MANUAL_VALIDATION.md). The package registers `codex_web_search` plus a `/codex-web-search` help command, validates tool parameters and safe configuration, runs the bounded Codex subprocess pipeline, parses `codex exec --json` output, formats concise Pi tool results, and covers the path with a fake-Codex executable integration harness.
 
 ## Current package shape
 
