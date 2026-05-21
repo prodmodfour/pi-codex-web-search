@@ -40,14 +40,19 @@ Ticket 004 adds safe argv construction before any subprocess execution:
 * null bytes, unsupported output formats, and inconsistent normalized inputs are
   rejected without echoing the query in error messages
 
-Required for later subprocess tickets:
+Ticket 005 adds bounded subprocess execution:
 
-* use `execFile` or `spawn` with argv arrays
-* never use `shell: true`
-* never interpolate the query into a command string
-* set timeouts
-* bound stdout/stderr buffers
-* return safe diagnostics
+* `CodexRunner` uses `execFile` with argv arrays and never builds a shell command
+* the executor options set `shell: false`
+* the executable defaults to `codex`; constructor overrides are validated as
+  non-empty strings without null bytes
+* normalized `timeoutMs` is passed to `execFile`
+* normalized `codex.maxBufferBytes` is passed as the stdout/stderr max buffer
+* missing binary, timeout, non-zero exit, max-buffer, cancellation, parser, and
+  unknown failures use structured `CodexRunnerError` codes
+* runner error messages do not include the argv array, prompt/query text, or raw
+  stderr; stderr is preserved separately as bounded diagnostics for later
+  formatting
 
 ## Web results
 

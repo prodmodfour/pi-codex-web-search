@@ -3,10 +3,10 @@
 ## Scope
 
 This document freezes the Pi extension/package contract that this package targets.
-It also freezes the Ticket 003 `codex_web_search` tool API and the Ticket 004
-safe `codex exec` argv-builder contract. It does **not** implement Codex
-subprocess execution; later tickets own process execution, JSONL parsing, result
-formatting, and final Pi registration.
+It also freezes the Ticket 003 `codex_web_search` tool API, the Ticket 004 safe
+`codex exec` argv-builder contract, and the Ticket 005 bounded subprocess-runner
+contract. Later tickets own JSONL parsing, result formatting, and final Pi
+registration.
 
 ## Research basis
 
@@ -270,7 +270,7 @@ stable internal shape before it becomes Pi `content` and `details`.
 
 ### Failure modes
 
-The API reserves these failure codes for later tickets:
+The API reserves these failure codes for runner, parser, and formatter modules:
 
 * `invalid_input`
 * `codex_not_found`
@@ -290,7 +290,7 @@ query value.
 Ticket 004 implements `src/codex/buildCodexArgs.ts`. It exports
 `buildCodexExecArgs(input)`, which accepts a `NormalizedCodexWebSearchInput` and
 returns the arguments for the Codex executable. The returned array excludes the
-binary name so a later runner can use a non-shell API such as:
+binary name so `CodexRunner` can use a non-shell API such as:
 
 ```ts
 execFile("codex", buildCodexExecArgs(input), options);
@@ -323,11 +323,62 @@ Builder rules:
 The important frozen safety constraint is that user input must become one argv
 array element, never a shell-interpolated command string.
 
+## Codex subprocess-runner contract
+
+Ticket 005 implements `src/codex/CodexRunner.ts`.
+
+Runner defaults and seams:
+
+* binary path defaults to `codex`;
+* constructor-level `codexBinary` override is validated as a non-empty string
+  without null bytes;
+* the default executor is `node:child_process` `execFile`;
+* tests can inject an `execFile`-compatible mock executor;
+* tests can inject an argv builder, but production defaults to
+  `buildCodexExecArgs`.
+
+Process options passed by the runner:
+
+* `encoding: "utf8"`;
+* `timeoutMs` from normalized tool input;
+* `maxBufferBytes` from normalized Codex execution options;
+* `killSignal: "SIGTERM"`;
+* `shell: false`;
+* optional `AbortSignal` for cancellation.
+
+Success result shape:
+
+```ts
+interface CodexRunnerRawResult {
+  stdout: string;
+  stderr: string;
+  diagnostics: CodexWebSearchDiagnostics;
+}
+```
+
+Structured failures are thrown as `CodexRunnerError` with these codes:
+
+* `invalid_input` when normalized input cannot produce safe argv/options;
+* `codex_not_found` for `ENOENT`;
+* `codex_timeout` when `execFile` kills the process after the timeout;
+* `codex_nonzero_exit` for non-zero status or signal failures;
+* `codex_output_too_large` for `ERR_CHILD_PROCESS_STDIO_MAXBUFFER`;
+* `codex_cancelled` for abort-signal cancellation;
+* `codex_parse_error` from `runAndParse(...)` when an injected parser throws;
+* `unknown_error` for remaining process failures.
+
+Runner error messages must remain actionable but must not copy the argv array,
+prompt/query text, or raw stderr. Bounded stderr is kept in diagnostics for later
+formatter work.
+
+`CodexRunner` intentionally does not parse JSONL events. Ticket 006 owns the
+parser; `runAndParse(...)` exists only to wrap parser failures consistently.
+
 ## Safety requirements
 
-* safe argv construction only; Codex subprocess execution remains a later ticket;
 * no shell command construction from query input;
 * no reading, copying, or logging Codex credentials;
 * no default write sandbox and no write-capable sandbox allowlist in Ticket 004;
-* bounded output in future runner/formatter tickets;
+* subprocess time and stdout/stderr buffers are bounded by Ticket 005;
+* formatted Pi tool output remains a future Ticket 007 responsibility;
 * automated tests must not invoke real Codex by default.

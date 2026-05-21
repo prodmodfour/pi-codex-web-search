@@ -127,7 +127,7 @@ Commit when complete.
 
 ## 005 — Implement Codex subprocess runner
 
-Status: TODO
+Status: DONE
 
 Implement `CodexRunner` to execute the safe argv with timeouts and bounded output.
 

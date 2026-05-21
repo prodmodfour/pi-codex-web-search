@@ -13,6 +13,13 @@ export {
 } from "./codex/buildCodexArgs.js";
 
 export {
+  CODEX_RUNNER_KILL_SIGNAL,
+  CodexRunner,
+  CodexRunnerError,
+  DEFAULT_CODEX_BINARY,
+} from "./codex/CodexRunner.js";
+
+export {
   CODEX_WEB_SEARCH_DEFAULTS,
   CODEX_WEB_SEARCH_LIMITS,
   CODEX_WEB_SEARCH_MODES,
@@ -28,6 +35,21 @@ export type {
   SafeCodexSandboxMode,
   SupportedCodexOutputFormat,
 } from "./codex/buildCodexArgs.js";
+
+export type {
+  CodexArgsBuilder,
+  CodexOutputParser,
+  CodexRunnerErrorCode,
+  CodexRunnerErrorOptions,
+  CodexRunnerExecutor,
+  CodexRunnerExecutorCallback,
+  CodexRunnerExecutorOptions,
+  CodexRunnerOptions,
+  CodexRunnerParsedResult,
+  CodexRunnerProcessError,
+  CodexRunnerRawResult,
+  CodexRunnerRunOptions,
+} from "./codex/CodexRunner.js";
 
 export type {
   CodexOutputFormat,

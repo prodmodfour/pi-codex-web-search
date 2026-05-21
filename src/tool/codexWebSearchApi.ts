@@ -3,7 +3,7 @@
  *
  * This module intentionally performs no Codex execution. It only defines the
  * tool input/result shapes and normalizes untrusted tool-call arguments into a
- * bounded execution request that later tickets can convert into argv arrays.
+ * bounded execution request consumed by the argv builder and runner.
  */
 export const CODEX_WEB_SEARCH_TOOL_NAME = "codex_web_search" as const;
 
