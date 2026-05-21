@@ -59,7 +59,7 @@ Commit when complete.
 
 ## 002 — Research and freeze current Pi extension contract
 
-Status: TODO
+Status: DONE
 
 Research the current Pi extension and package expectations, then freeze the assumptions the code will target.
 

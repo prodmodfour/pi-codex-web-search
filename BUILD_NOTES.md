@@ -2,21 +2,25 @@
 
 ## Current state
 
-Tickets 000 and 001 are complete. The repository has a TypeScript/npm Pi package skeleton for `pi-codex-web-search` plus project-specific local validation guardrails.
+Tickets 000, 001, and 002 are complete. The repository has a TypeScript/npm Pi package skeleton, project-specific validation guardrails, and a frozen Pi extension/package contract for the future `codex_web_search` tool.
 
-Ticket 001 added in this cycle:
+Ticket 002 added in this cycle:
 
-* `scripts/check-shell-syntax.sh` for reusable `bash -n` validation of repository shell scripts
-* strengthened `scripts/quality-gate.sh` orchestration for shell checks, secret guardrails, generated/private-file guardrails, npm install/CI, lint, typecheck, tests, build, package dry-run, cleanup, and a post-check artifact guardrail
-* strengthened `scripts/check-no-generated-private-files.sh` checks for real env files, Codex auth artifacts, generated dependency/build/coverage directories, npm tarballs, and tracked generated/private paths
-* npm convenience scripts: `quality`, `check:shell`, `guard:secrets`, and `guard:generated`
-* `docs/QUALITY_GATE.md` documenting the gate checks, npm script map, cleanup behavior, and limitations
-* README updates pointing developers at the quality-gate documentation
-* package-shape test coverage for the quality-related npm scripts
+* researched the locally installed Pi package (`0.75.4`) through its extension/package docs, examples, and exported TypeScript declarations
+* rewrote `docs/EXTENSION_SPEC.md` with frozen assumptions for extension entrypoints, `registerTool`, package manifest shape, install/load paths, and the narrow local mock contract
+* added `src/pi/piExtensionContract.ts`, a minimal local TypeScript subset of the Pi API for future internal wiring/tests without requiring a real Pi runtime during automated checks
+* exported the local contract types from `src/index.ts`
+* added `test/fixtures/mock-pi-api.mjs` and `test/pi-contract-fixture.test.mjs` so future extension-registration tests can capture registered tools/commands without invoking real Pi or Codex
+* updated README to point at the frozen extension specification
+* updated `docs/ARCHITECTURE.md` to show the current local contract module alongside future modules
 
-The placeholder extension still intentionally does not call Codex or register `codex_web_search`; later tickets own the Pi extension contract, tool API, runner, parser, formatter, and final registration.
+The placeholder extension still intentionally does not call Codex or register `codex_web_search`; later tickets own the tool API, argv builder, runner, parser, formatter, and final registration.
+
+No Codex live search, real Codex CLI invocation, or Codex authentication was used.
 
 ## Quality gates
+
+Ran `npm test --if-present` successfully during development.
 
 Ran `scripts/quality-gate.sh` successfully.
 
@@ -36,11 +40,11 @@ The gate performed:
 
 The npm package dry-run included the intended package files from `files`: README, docs, extension source, package metadata, and `src` metadata. `node_modules/` was removed by the gate before exit.
 
-No real Codex invocation or authentication was used.
-
-## Known blockers
+## Known blockers and limitations
 
 None for automated quality validation.
+
+The local Pi contract in `src/pi/piExtensionContract.ts` is intentionally narrow and mirrors only the subset frozen in `docs/EXTENSION_SPEC.md`. It should be replaced or reconciled explicitly if a future ticket imports official Pi runtime types or TypeBox schemas directly.
 
 Manual real-Codex validation will require a machine with:
 
@@ -50,4 +54,4 @@ Manual real-Codex validation will require a machine with:
 
 ## Next recommended ticket
 
-Ticket 002 — Research and freeze current Pi extension contract.
+Ticket 003 — Define the `codex_web_search` tool API.

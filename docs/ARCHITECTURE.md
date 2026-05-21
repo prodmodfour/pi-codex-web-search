@@ -16,7 +16,8 @@ Pi extension entrypoint
 
 ```text
 extensions/codex-web-search.ts
-src/pi/registerCodexWebSearchTool.ts
+src/pi/piExtensionContract.ts          # current local contract/test subset
+src/pi/registerCodexWebSearchTool.ts   # future registration module
 src/codex/buildCodexArgs.ts
 src/codex/CodexRunner.ts
 src/codex/CodexJsonlParser.ts

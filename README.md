@@ -25,7 +25,7 @@ The Pi manifest currently points to the TypeScript entrypoint:
 }
 ```
 
-Pi loads TypeScript extensions through its extension runtime, so this scaffold ships TypeScript source rather than compiled JavaScript.
+Pi loads TypeScript extensions through its extension runtime, so this scaffold ships TypeScript source rather than compiled JavaScript. The frozen Pi extension/package assumptions for this build are documented in [`docs/EXTENSION_SPEC.md`](docs/EXTENSION_SPEC.md).
 
 ## Development prerequisites
 
