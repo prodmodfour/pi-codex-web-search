@@ -2,7 +2,7 @@
 
 `pi-codex-web-search` is a TypeScript Pi package scaffold for a future `codex_web_search` tool. The package is intended to let Pi call the local Codex CLI for web-enabled answers while relying on the user's existing Codex/ChatGPT authentication.
 
-> Status: build in progress. The current package exposes a safe, no-op placeholder extension entrypoint, the typed/validated `codex_web_search` API contract, a safe `codex exec` argv builder, and a bounded Codex subprocess runner. The placeholder Pi extension still does **not** call Codex or register the final Pi tool yet.
+> Status: build in progress. The current package exposes a safe, no-op placeholder extension entrypoint, the typed/validated `codex_web_search` API contract, a safe `codex exec` argv builder, a bounded Codex subprocess runner, and a JSONL parser for `codex exec --json` output. The placeholder Pi extension still does **not** call Codex or register the final Pi tool yet.
 
 ## Current package shape
 
@@ -13,6 +13,7 @@ src/index.ts                         # shared package metadata and exported API/
 src/tool/codexWebSearchApi.ts        # codex_web_search input/result types and validation
 src/codex/buildCodexArgs.ts          # safe codex exec argv construction
 src/codex/CodexRunner.ts             # execFile-based Codex subprocess runner
+src/codex/CodexJsonlParser.ts        # parser for codex exec --json JSONL events
 test/package-shape.test.mjs          # smoke tests for the package skeleton
 docs/                                # design, security, usage, validation, and quality-gate notes
 scripts/quality-gate.sh              # local validation gate used by the build loop
@@ -63,8 +64,9 @@ Later tickets will replace the placeholder with a Pi tool named `codex_web_searc
 * passes the prompt after an end-of-options `--` separator so prompt text stays positional even when it starts with dashes
 * bounds subprocess time and stdout/stderr buffers with `execFile` options
 * maps missing binary, timeout, non-zero exit, oversized output, cancellation, and parser failures to structured errors
+* parses `codex exec --json` JSONL, using the last completed agent message as the answer and preserving stderr diagnostics separately
 * bounds returned Pi tool content
-* parses or formats Codex output into concise Pi tool results
+* formats parsed Codex output into concise Pi tool results
 
 ## Safety notes
 
@@ -79,5 +81,7 @@ The current argv builder returns arguments for `CodexRunner`, which calls the co
 `mode: "cached"` omits `--search`; `skipGitRepoCheck: false` omits `--skip-git-repo-check`. The only currently allowed sandbox value is `read-only`.
 
 `CodexRunner` defaults to the PATH-resolved `codex` binary, but accepts a validated `codexBinary` override for future configuration work. It passes the normalized timeout and max-buffer limits to `execFile` and keeps process errors structured without copying argv or query text into error messages.
+
+`CodexJsonlParser` parses only stdout JSONL records, tolerates unknown event types, captures web-search summaries when Codex emits them, and keeps stderr in diagnostics rather than mixing it into the answer text. Malformed JSONL and missing final-agent-message cases use structured parser errors.
 
 Automated tests must use mocks or fake executables. Real Codex validation belongs in `docs/MANUAL_VALIDATION.md` and requires a local user who has installed Codex and run `codex login`.

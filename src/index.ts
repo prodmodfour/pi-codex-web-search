@@ -20,6 +20,13 @@ export {
 } from "./codex/CodexRunner.js";
 
 export {
+  CodexJsonlParserError,
+  isCodexJsonlParserError,
+  parseCodexJsonlOutput,
+  parseCodexJsonlToolResult,
+} from "./codex/CodexJsonlParser.js";
+
+export {
   CODEX_WEB_SEARCH_DEFAULTS,
   CODEX_WEB_SEARCH_LIMITS,
   CODEX_WEB_SEARCH_MODES,
@@ -50,6 +57,16 @@ export type {
   CodexRunnerRawResult,
   CodexRunnerRunOptions,
 } from "./codex/CodexRunner.js";
+
+export type {
+  CodexJsonlAgentMessage,
+  CodexJsonlParsedOutput,
+  CodexJsonlParseOptions,
+  CodexJsonlParserErrorCode,
+  CodexJsonlParserErrorOptions,
+  CodexJsonlRawOutput,
+  CodexJsonlWebSearchSummary,
+} from "./codex/CodexJsonlParser.js";
 
 export type {
   CodexOutputFormat,

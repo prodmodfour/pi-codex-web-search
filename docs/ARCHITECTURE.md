@@ -51,11 +51,32 @@ The prompt is always the final argv element after `--`. `mode: "cached"` omits
 * returns raw stdout/stderr plus byte-count diagnostics on success;
 * maps missing binary, timeout, non-zero exit, max-buffer, cancellation, and
   unknown process failures to `CodexRunnerError` with stable failure codes;
-* exposes `runAndParse(...)` so a future JSONL parser can be injected while parse
+* exposes `runAndParse(...)` so parser functions can be injected while parse
   failures are wrapped as `codex_parse_error`.
 
 The runner intentionally does not parse JSONL events or format Pi tool output;
-Tickets 006 and 007 own those responsibilities.
+those remain separate modules.
+
+## Implemented JSONL-parser boundary
+
+`src/codex/CodexJsonlParser.ts` owns parsing for `codex exec --json` stdout. It:
+
+* parses non-empty stdout lines as JSON objects and reports malformed/non-object
+  lines as `CodexJsonlParserError` with `codex_parse_error`;
+* ignores unknown event types;
+* extracts completed agent/assistant message items and treats the last completed
+  agent message as the answer;
+* captures lightweight web-search summaries from documented `web_search`/
+  `webSearch` item shapes when present;
+* extracts HTTP(S) citation/source URLs from annotations, sources, results, and
+  web-search actions when Codex provides them;
+* preserves stderr and byte counts in diagnostics rather than mixing stderr into
+  answer text;
+* can include raw parsed events only when explicitly requested by the normalized
+  tool input.
+
+The parser intentionally does not format Pi `content`; Ticket 007 owns the
+formatter.
 
 ## Test strategy
 

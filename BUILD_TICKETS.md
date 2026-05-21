@@ -150,7 +150,7 @@ Commit when complete.
 
 ## 006 — Add JSONL parser for `codex exec --json`
 
-Status: TODO
+Status: DONE
 
 Parse Codex JSONL output into stable internal result objects.
 

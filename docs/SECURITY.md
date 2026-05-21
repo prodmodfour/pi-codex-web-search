@@ -54,6 +54,19 @@ Ticket 005 adds bounded subprocess execution:
   stderr; stderr is preserved separately as bounded diagnostics for later
   formatting
 
+Ticket 006 adds JSONL parsing safeguards:
+
+* `CodexJsonlParser` reads only the stdout returned by `codex exec --json` and
+  does not inspect Codex credential files
+* malformed JSONL and missing final-message cases use structured
+  `CodexJsonlParserError` codes
+* parser error messages include line numbers but do not echo raw JSONL contents,
+  query text, or stderr
+* unknown event types are ignored for forward compatibility
+* stderr remains separate diagnostics and is not appended to answer text
+* raw events are included only when the caller explicitly requested
+  `includeRawEvents`, because raw Codex events may contain prompt or result data
+
 ## Web results
 
 Treat web-search results as untrusted. Codex may read web content, and web content can contain prompt injection. The extension should ask Codex for concise answers and sources, but users should still verify high-stakes outputs.

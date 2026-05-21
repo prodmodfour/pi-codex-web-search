@@ -4,9 +4,9 @@
 
 This document freezes the Pi extension/package contract that this package targets.
 It also freezes the Ticket 003 `codex_web_search` tool API, the Ticket 004 safe
-`codex exec` argv-builder contract, and the Ticket 005 bounded subprocess-runner
-contract. Later tickets own JSONL parsing, result formatting, and final Pi
-registration.
+`codex exec` argv-builder contract, the Ticket 005 bounded subprocess-runner
+contract, and the Ticket 006 JSONL-parser contract. Later tickets own result
+formatting and final Pi registration.
 
 ## Research basis
 
@@ -371,8 +371,49 @@ Runner error messages must remain actionable but must not copy the argv array,
 prompt/query text, or raw stderr. Bounded stderr is kept in diagnostics for later
 formatter work.
 
-`CodexRunner` intentionally does not parse JSONL events. Ticket 006 owns the
-parser; `runAndParse(...)` exists only to wrap parser failures consistently.
+`CodexRunner` intentionally does not parse JSONL events. `runAndParse(...)`
+exists only to provide a parser injection seam when callers want runner-level
+parse-failure wrapping.
+
+## Codex JSONL-parser contract
+
+Ticket 006 implements `src/codex/CodexJsonlParser.ts` for `codex exec --json`
+stdout.
+
+Primary exports:
+
+* `parseCodexJsonlOutput(raw, options)` returns a parser-specific object with:
+  * `answer`: the last completed agent/assistant message text;
+  * `finalAgentMessage` and `agentMessages` metadata;
+  * `webSearches`: lightweight summaries of web-search events when present;
+  * `sources`: deduplicated HTTP(S) source/citation URLs when Codex provides
+    annotations, sources, results, or action URLs;
+  * optional `rawEvents` only when `includeRawEvents` is requested;
+  * optional `diagnostics`, including stderr kept separately from answer text.
+* `parseCodexJsonlToolResult(raw, input)` wraps the parsed output in the Ticket
+  003 `CodexWebSearchNormalizedSuccess` shape for later formatter/registration
+  code.
+* `CodexJsonlParserError` uses stable codes:
+  * `codex_parse_error` for malformed JSONL or JSONL records that are not
+    objects;
+  * `codex_missing_final_message` when no completed agent/assistant message is
+    present.
+
+Parser compatibility assumptions:
+
+* current documented events such as `item.completed` with
+  `item.type: "agent_message"` are supported;
+* older/alternate completed-message aliases such as
+  `item.item_type: "assistant_message"` and JSON-RPC-style
+  `method: "item/completed"` with `params.item.type: "agentMessage"` are
+  supported;
+* web-search item aliases such as `web_search`, `webSearch`, and
+  `web_search_call` are summarized when they include useful fields;
+* unknown event types are ignored rather than treated as failures.
+
+Parser errors intentionally do not echo raw JSONL line contents, query text, or
+stderr in the error message. Stderr remains available in structured diagnostics
+for future formatting.
 
 ## Safety requirements
 
