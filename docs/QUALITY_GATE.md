@@ -10,6 +10,18 @@ npm run quality
 
 The gate is intentionally safe for automated runs: it does not require Pi, a real Codex CLI, Codex authentication, or network access beyond normal npm dependency installation. Integration coverage uses the checked-in fake Codex executable fixture under `test/fixtures/` rather than the real `codex` binary.
 
+## GitHub Actions CI
+
+`.github/workflows/quality.yml` runs the same local gate on GitHub-hosted Ubuntu for `push`, `pull_request`, and manual `workflow_dispatch` runs. The workflow checks out the repository, sets up Node.js 20.x with npm caching, and runs:
+
+```bash
+bash scripts/quality-gate.sh
+```
+
+Because the local gate owns the check list, CI runs the shell syntax checks, secret and generated/private-file guardrails, npm validation scripts, tests, build/type checks, and `npm run pack:check` package dry-run validation without duplicating the logic in workflow YAML.
+
+CI intentionally does not install Pi, install or authenticate the real Codex CLI, run `codex login`, perform live web search, publish to npm, or exercise account-specific behaviour. Real Codex/Pi validation remains an opt-in human activity documented in [`MANUAL_VALIDATION.md`](MANUAL_VALIDATION.md).
+
 ## Checks
 
 `quality-gate.sh` currently runs these checks in order:

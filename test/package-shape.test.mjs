@@ -4,6 +4,8 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const packageJsonUrl = new URL("../package.json", import.meta.url);
+const qualityGateDocsUrl = new URL("../docs/QUALITY_GATE.md", import.meta.url);
+const qualityWorkflowUrl = new URL("../.github/workflows/quality.yml", import.meta.url);
 const packageJson = JSON.parse(await readFile(packageJsonUrl, "utf8"));
 
 test("package declares the Pi extension entrypoint", () => {
@@ -41,4 +43,27 @@ test("pack check uses the package contents validator", () => {
 
 test("release documentation exists", () => {
   assert.equal(existsSync(new URL("../docs/RELEASE.md", import.meta.url)), true);
+});
+
+test("GitHub Actions quality workflow runs the local quality gate", async () => {
+  assert.equal(existsSync(qualityWorkflowUrl), true);
+
+  const workflow = await readFile(qualityWorkflowUrl, "utf8");
+  assert.match(workflow, /^name: quality$/m);
+  assert.match(workflow, /^  pull_request:$/m);
+  assert.match(workflow, /^  workflow_dispatch:$/m);
+  assert.match(workflow, /uses: actions\/checkout@v4/);
+  assert.match(workflow, /uses: actions\/setup-node@v4/);
+  assert.match(workflow, /node-version:\s*\$\{\{\s*matrix\.node-version\s*\}\}/);
+  assert.match(workflow, /- 20\.x/);
+  assert.match(workflow, /run: bash scripts\/quality-gate\.sh/);
+  assert.doesNotMatch(workflow, /codex login|codex exec|@openai\/codex/);
+});
+
+test("quality gate docs describe CI limits and manual validation", async () => {
+  const docs = await readFile(qualityGateDocsUrl, "utf8");
+  assert.match(docs, /## GitHub Actions CI/);
+  assert.match(docs, /does not install Pi/);
+  assert.match(docs, /real Codex CLI/);
+  assert.match(docs, /MANUAL_VALIDATION\.md/);
 });

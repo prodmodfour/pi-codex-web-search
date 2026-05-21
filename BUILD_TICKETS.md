@@ -401,7 +401,7 @@ Commit when complete.
 
 ## 017 — Add GitHub Actions quality workflow
 
-Status: TODO
+Status: DONE
 
 Add CI for the repository.
 

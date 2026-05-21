@@ -2,23 +2,22 @@
 
 ## Current state
 
-Tickets 000 through 016 are complete. The repository now has a TypeScript/npm Pi package skeleton, project-specific validation guardrails, a frozen Pi extension/package contract, the finalized `codex_web_search` tool API contract, a safe `codex exec` argv builder, a bounded Codex subprocess runner, a JSONL parser for `codex exec --json` stdout, a bounded formatter for Pi tool output, Pi tool registration wiring, a small optional Pi slash-command help surface, safe configuration handling, a fake-Codex integration test harness, a manual real-Codex validation guide, user-facing installation/package documentation, a security threat model, expanded troubleshooting guidance, and release/package-content validation.
+Tickets 000 through 017 are complete. The repository now has a TypeScript/npm Pi package skeleton, project-specific validation guardrails, a frozen Pi extension/package contract, the finalized `codex_web_search` tool API contract, a safe `codex exec` argv builder, a bounded Codex subprocess runner, a JSONL parser for `codex exec --json` stdout, a bounded formatter for Pi tool output, Pi tool registration wiring, a small optional Pi slash-command help surface, safe configuration handling, a fake-Codex integration test harness, a manual real-Codex validation guide, user-facing installation/package documentation, a security threat model, expanded troubleshooting guidance, release/package-content validation, and a GitHub Actions quality workflow.
 
-Ticket 016 added in this cycle:
+Ticket 017 added in this cycle:
 
-* added `scripts/check-package-contents.mjs`, a Node-based npm package dry-run validator that runs `npm pack --dry-run --json` without creating a tarball
-* changed `npm run pack:check` to execute the validator instead of only printing raw npm dry-run output
-* validated the package `files` allowlist, package name/version, required runtime/docs files, and `pi.extensions` entrypoint presence
-* added forbidden-path checks for private/generated/non-runtime content such as `.env`, `.codex`, `auth.json`, `node_modules`, `dist`, `build`, `coverage`, `.agent`, `.pi`, `*.tgz`, `test/`, `scripts/`, autonomous build notes, and agent/project prompt files
-* added tests that keep the package files allowlist narrow, confirm the package-content checker script is wired, and require release documentation to exist
-* added `docs/RELEASE.md` with the release checklist, package contents policy, manual inspection notes, npm publishing reminders, and no-secrets guidance
-* updated README, installation, quality-gate, and security docs to point at the package-content validator and release process
+* replaced the minimal `.github/workflows/quality.yml` with an explicit GitHub Actions workflow for `push`, `pull_request`, and manual `workflow_dispatch` runs
+* constrained workflow permissions to read-only repository contents and added concurrency cancellation for repeated runs on the same ref
+* configured GitHub-hosted Ubuntu with Node.js 20.x and npm cache support
+* made CI run the same local `bash scripts/quality-gate.sh` entrypoint used by the autonomous build loop, so shell syntax checks, guardrails, npm scripts, tests, build/type checks, and package dry-run validation stay centralized
+* added package-shape tests that assert the quality workflow exists, uses checkout/setup-node, runs the local quality gate, and does not try to run real Codex login/search commands
+* updated `docs/QUALITY_GATE.md` and README to document the CI path, its limitations, and the manual real-Codex/Pi validation path
 
-No Codex live search, authenticated Codex run, real Codex CLI execution, Codex credential access, browser automation, or network research was used in this cycle. The ticket was focused on npm package validation and release documentation.
+No Codex live search, authenticated Codex run, real Codex CLI execution, Codex credential access, browser automation, or network research was used in this cycle. The ticket was focused on repository CI wiring and documentation.
 
 ## Quality gates
 
-Ran `scripts/quality-gate.sh` successfully after implementing Ticket 016.
+Ran `scripts/quality-gate.sh` successfully after implementing Ticket 017.
 
 The passing gate performed:
 
@@ -28,21 +27,21 @@ The passing gate performed:
 * `npm ci`
 * `npm run lint --if-present`
 * `npm run typecheck --if-present`
-* `npm test --if-present` with 59 passing tests, including the fake-Codex executable integration tests and the new package-shape checks
+* `npm test --if-present` with 61 passing tests, including the fake-Codex executable integration tests and the new GitHub Actions workflow/documentation checks
 * `npm run build --if-present`
-* `npm run pack:check`, which ran the new package-content validator and confirmed the npm dry-run would ship 22 intended files
+* `npm run pack:check`, which ran the package-content validator and confirmed the npm dry-run would ship the intended 22 runtime/docs files
 * cleanup of `node_modules/` created by the gate
 * generated/private-file guardrail after cleanup
 
-A direct `npm run pack:check` was also run successfully before the full quality gate. The validated package dry-run includes the intended `package.json`, `README.md`, `docs/`, `extensions/`, and `src/` contents, including `docs/RELEASE.md`. Test fixtures, scripts, autonomous build notes, dependency directories, generated output, package tarballs, and private/auth files are not included in the npm dry-run contents.
+The validated package dry-run still includes only the intended `package.json`, `README.md`, `docs/`, `extensions/`, and `src/` contents. The GitHub Actions workflow, test fixtures, scripts, autonomous build notes, dependency directories, generated output, package tarballs, and private/auth files are not included in the npm dry-run contents.
 
 ## Known blockers and limitations
 
 None for automated quality validation.
 
-Manual real-Codex validation still requires a human machine with Pi installed, Codex CLI installed, `codex login` completed, a Pi model/provider configured, and network access. This remains an external manual activity; the repository documents the procedure but does not run it during the automated gate.
+GitHub Actions CI now runs the local quality gate on hosted Ubuntu with Node.js 20.x, but it intentionally does not install Pi, install or authenticate Codex, run `codex login`, perform live web search, publish to npm, or validate account-specific Codex behaviour. Manual real-Codex validation still requires a human machine with Pi installed, Codex CLI installed, `codex login` completed, a Pi model/provider configured, and network access.
 
-The package is not documented as published to npm yet. The npm-style Pi commands are the intended source syntax once `pi-codex-web-search` is published under the expected name/version; local path and git source loading are documented for current validation. Ticket 016 added package dry-run validation, but it does not publish, sign, or upload the package.
+The package is not documented as published to npm yet. The npm-style Pi commands are the intended source syntax once `pi-codex-web-search` is published under the expected name/version; local path and git source loading are documented for current validation. Package dry-run validation does not publish, sign, or upload the package.
 
 The package-content validator intentionally mirrors the current narrow `files` allowlist and required docs/runtime files. If future tickets intentionally add packaged runtime files or rename documentation, `scripts/check-package-contents.mjs` must be updated with the package strategy change.
 
@@ -74,4 +73,4 @@ The `/codex-web-search` command uses Pi's UI notification surface when available
 
 ## Next recommended ticket
 
-Ticket 017 — Add GitHub Actions quality workflow.
+Ticket 018 — Add example local Pi project fixture.

@@ -105,6 +105,8 @@ npm run quality
 
 The gate runs shell syntax checks, secret and generated-file guardrails, npm validation scripts, and a package dry-run with package-contents validation. See [`docs/QUALITY_GATE.md`](docs/QUALITY_GATE.md) for the full checklist and [`docs/RELEASE.md`](docs/RELEASE.md) for release packaging steps.
 
+GitHub Actions runs the same quality gate on pushes, pull requests, and manual workflow dispatches through `.github/workflows/quality.yml`. CI is intentionally limited to fake-Codex/mocked automated coverage and does not install Pi, authenticate Codex, perform live web search, or publish the package; use [`docs/MANUAL_VALIDATION.md`](docs/MANUAL_VALIDATION.md) for real local Codex/Pi validation.
+
 ## Current tool behavior
 
 The extension registers a Pi tool named `codex_web_search` that:
